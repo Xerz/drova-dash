@@ -289,12 +289,13 @@ try:
     # Итоговые выборы
     selected_uuids = ss.uuid_sel if ss.enable_uuid else all_uuids
     selected_products = ss.prod_sel if ss.enable_prod else all_products
+    selected_city = ss.city_sel if ss.enable_city else all_cities
 
     # Применяем фильтрацию
     filtered = intervals_with_duration[
         intervals_with_duration["uuid"].isin(selected_uuids)
         & intervals_with_duration["product_id"].isin(selected_products)
-        & intervals_with_duration["city_name"].isin(ss.city_sel)
+        & intervals_with_duration["city_name"].isin(selected_city)
         & intervals_with_duration["duration_sec"].notna()
         ].copy()
 
