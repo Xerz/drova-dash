@@ -24,7 +24,7 @@ PRODUCTS_URL = "https://services.drova.io/product-manager/product/listfull2"
 # Cached helpers
 # -----------------------------
 @st.cache_data(show_spinner=False, ttl=600)
-def fetch_station_names(limit=1000, offset=0):
+def fetch_stations_dict(limit=1000, offset=0):
     payload = {
         "stationNameOrDescription": None,
         "stationStatus": None,
@@ -41,10 +41,20 @@ def fetch_station_names(limit=1000, offset=0):
         r = requests.post(STATIONS_URL, json=payload, timeout=15)
         r.raise_for_status()
         data = r.json()
-        return {item.get("uuid"): item.get("name") for item in data if isinstance(item, dict)}
+        # вернём две мапы: uuid->name и uuid->city_name
+        uuid_to_name = {}
+        uuid_to_city = {}
+        for item in data:
+            if isinstance(item, dict):
+                u = item.get("uuid")
+                if u:
+                    uuid_to_name[u] = item.get("name")
+                    uuid_to_city[u] = item.get("city_name")  # <- ключ города
+        return uuid_to_name, uuid_to_city
     except Exception as e:
         st.warning(f"Не удалось получить список станций: {e}")
-        return {}
+        return {}, {}
+
 
 
 @st.cache_data(show_spinner=False, ttl=600)
@@ -196,12 +206,13 @@ try:
         ].copy()
 
     # Справочники имён
-    uuid_to_name = fetch_station_names()
+    uuid_to_name, uuid_to_city = fetch_stations_dict()
     pid_to_title = fetch_product_titles()
 
     # Человекочитаемые подписи
     intervals_with_duration["station_name"] = intervals_with_duration["uuid"].map(uuid_to_name)
     intervals_with_duration["product_title"] = intervals_with_duration["product_id"].map(pid_to_title)
+    intervals_with_duration["city_name"] = intervals_with_duration["uuid"].map(uuid_to_city)  # <- НОВОЕ
 
     # Таблица длительностей (видимая)
     # st.dataframe(
@@ -218,6 +229,7 @@ try:
     # Опции
     all_uuids = sorted(intervals_with_duration["uuid"].dropna().unique().tolist())
     all_products = sorted(intervals_with_duration["product_id"].dropna().unique().tolist())
+    all_cities = sorted(intervals_with_duration["city_name"].dropna().unique().tolist())
 
 
     # Функции форматирования "человеческих" подписей
@@ -236,12 +248,15 @@ try:
     # Инициализация: один раз — всё выбрано
     if "enable_uuid" not in ss: ss.enable_uuid = False
     if "enable_prod" not in ss: ss.enable_prod = False
+    if "enable_city" not in ss: ss.enable_city = False
     if "uuid_sel" not in ss: ss.uuid_sel = []
     if "prod_sel" not in ss: ss.prod_sel = []
+    if "city_sel" not in ss: ss.city_sel = []  # стартуем пустым
 
     # Синхронизация с текущими опциями (БЕЗ фолбэка «всё», чтобы крестик работал)
     ss.uuid_sel = [u for u in ss.uuid_sel if u in all_uuids]
     ss.prod_sel = [p for p in ss.prod_sel if p in all_products]
+    ss.city_sel = [c for c in ss.city_sel if c in all_cities]
 
     # Чекбоксы (без value=) и мультиселекты (без default=), состояние хранится в key
     st.sidebar.checkbox("Filter by station", key="enable_uuid")
@@ -262,6 +277,15 @@ try:
             format_func=_fmt_prod,
         )
 
+    st.sidebar.checkbox("Filter by city", key="enable_city")
+    if ss.enable_city:
+        ss.city_sel = st.sidebar.multiselect(
+            "City",
+            options=all_cities,
+            key="city_sel",
+            help="Выбери один или несколько городов. Пусто — ничего не показывать."
+        )
+
     # Итоговые выборы
     selected_uuids = ss.uuid_sel if ss.enable_uuid else all_uuids
     selected_products = ss.prod_sel if ss.enable_prod else all_products
@@ -270,6 +294,7 @@ try:
     filtered = intervals_with_duration[
         intervals_with_duration["uuid"].isin(selected_uuids)
         & intervals_with_duration["product_id"].isin(selected_products)
+        & (~ss.enable_city | intervals_with_duration["city_name"].isin(ss.city_sel))
         & intervals_with_duration["duration_sec"].notna()
         ].copy()
 
