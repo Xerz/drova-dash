@@ -294,7 +294,7 @@ try:
     filtered = intervals_with_duration[
         intervals_with_duration["uuid"].isin(selected_uuids)
         & intervals_with_duration["product_id"].isin(selected_products)
-        & (~ss.enable_city | intervals_with_duration["city_name"].isin(ss.city_sel))
+        & intervals_with_duration["city_name"].isin(ss.city_sel)
         & intervals_with_duration["duration_sec"].notna()
         ].copy()
 
