@@ -279,7 +279,7 @@ try:
 
     st.sidebar.checkbox("Filter by city", key="enable_city")
     if ss.enable_city:
-        ss.city_sel = st.sidebar.multiselect(
+        st.sidebar.multiselect(
             "City",
             options=all_cities,
             key="city_sel",
