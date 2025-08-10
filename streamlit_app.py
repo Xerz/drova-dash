@@ -400,5 +400,64 @@ try:
         )
         st.plotly_chart(fig, use_container_width=True)
 
+        # -----------------------------
+        # Рейтинг по городам
+        # -----------------------------
+        # city_name может быть NaN — подменим меткой
+        agg_city = (
+            filtered.assign(city=lambda d: d["city_name"].fillna("Unknown"))
+            .groupby("city", as_index=False)["duration_sec"].sum()
+            .assign(duration_hours=lambda d: d["duration_sec"] / 3600)
+            .sort_values("duration_hours", ascending=False)
+        )
+
+        # Топ-20 для графика
+        agg_city_top20 = agg_city.head(20).copy()
+
+        st.subheader("By city (top-20)")
+        if not agg_city_top20.empty:
+            chart_city = (
+                alt.Chart(agg_city_top20)
+                .mark_bar()
+                .encode(
+                    x=alt.X("duration_hours:Q", title="Total BUSY hours"),
+                    y=alt.Y("city:N", sort='-x', title="City"),
+                    tooltip=[
+                        alt.Tooltip("city:N", title="City"),
+                        alt.Tooltip("duration_hours:Q", format=",.2f", title="hours"),
+                        alt.Tooltip("duration_sec:Q", format=",.0f", title="seconds"),
+                    ],
+                )
+                .properties(height=800)  # чтобы было как на других графиках
+            )
+            st.altair_chart(chart_city, use_container_width=True)
+        else:
+            st.info("No data after filters.")
+
+        # Полная таблица рейтинга по городам
+        st.subheader("Полный рейтинг по городам")
+        st.dataframe(
+            agg_city[["city", "duration_hours", "duration_sec"]],
+            use_container_width=True
+        )
+
+        # (необязательно) Скачать CSV с рейтингом по городам
+        csv_city = agg_city.to_csv(index=False).encode("utf-8")
+        st.download_button("⬇️ Download city ranking (CSV)", data=csv_city, file_name="ranking_by_city.csv",
+                           mime="text/csv")
+
+        # Treemap по городам (опционально, требует plotly)
+        if not agg_city.empty:
+            fig_city = px.treemap(
+                agg_city.rename(columns={"city": "City"}),
+                path=["City"],
+                values="duration_hours",
+                color="duration_hours",
+                color_continuous_scale="Blues",
+                title="Treemap по BUSY часам (Cities)"
+            )
+            st.plotly_chart(fig_city, use_container_width=True)
+
+
 except Exception as e:
     st.error(f"Error: {e}")
