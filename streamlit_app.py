@@ -1,7 +1,7 @@
 import io
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 import tempfile
 import requests
 import pandas as pd
@@ -198,12 +198,37 @@ try:
         (intervals_with_duration["ended_at"] - intervals_with_duration["started_at"]).dt.total_seconds()
     )
 
+    default_end = pd.Timestamp(datetime.today()).normalize()
+    default_start = default_end - timedelta(days=30)
+    selected_dates = st.sidebar.date_input(
+        "Date range",
+        value=(default_start.date(), default_end.date()),
+        key="busy_date_range",
+    )
+
+    if isinstance(selected_dates, (tuple, list)) and len(selected_dates) == 2:
+        start_date, end_date = selected_dates
+    else:
+        start_date = end_date = selected_dates
+
+    if start_date > end_date:
+        start_date, end_date = end_date, start_date
+
+    selected_start = pd.Timestamp(start_date).normalize()
+    selected_end = pd.Timestamp(end_date).normalize() + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
+
     # (2) Фильтрация по максимальной длительности
     max_seconds = threshold_hours * 3600
     intervals_with_duration = intervals_with_duration[
         (intervals_with_duration["duration_sec"].isna()) |
         (intervals_with_duration["duration_sec"] <= max_seconds)
         ].copy()
+
+    date_mask = (
+        (intervals_with_duration["started_at"] <= selected_end)
+        & (intervals_with_duration["ended_at"].fillna(selected_end) >= selected_start)
+    )
+    intervals_with_duration = intervals_with_duration[date_mask].copy()
 
     # Справочники имён
     uuid_to_name, uuid_to_city = fetch_stations_dict()
