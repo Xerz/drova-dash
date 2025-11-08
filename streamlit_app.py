@@ -336,16 +336,51 @@ try:
     # -----------------------------
     # Рейтинги и графики
     # -----------------------------
+
+    # --- сессионные статистики по станциям/продуктам
+    stats_uuid = (
+        filtered.groupby("uuid")["duration_sec"]
+        .agg(
+            session_mean_sec="mean",
+            session_p25_sec=lambda s: s.quantile(0.25),
+            session_p75_sec=lambda s: s.quantile(0.75),
+        )
+        .reset_index()
+        .assign(
+            session_mean_hours=lambda d: d["session_mean_sec"] / 3600,
+            session_p25_hours=lambda d: d["session_p25_sec"] / 3600,
+            session_p75_hours=lambda d: d["session_p75_sec"] / 3600,
+        )
+    )
+
+    stats_prod = (
+        filtered.groupby("product_id")["duration_sec"]
+        .agg(
+            session_mean_sec="mean",
+            session_p25_sec=lambda s: s.quantile(0.25),
+            session_p75_sec=lambda s: s.quantile(0.75),
+        )
+        .reset_index()
+        .assign(
+            session_mean_hours=lambda d: d["session_mean_sec"] / 3600,
+            session_p25_hours=lambda d: d["session_p25_sec"] / 3600,
+            session_p75_hours=lambda d: d["session_p75_sec"] / 3600,
+        )
+    )
+
     st.markdown("### 📈 Rankings by total BUSY duration (filtered)")
     agg_uuid = (
         filtered.groupby("uuid", as_index=False)["duration_sec"].sum()
         .assign(duration_hours=lambda d: d["duration_sec"] / 3600)
         .sort_values("duration_hours", ascending=False)
+        .merge(stats_uuid, on="uuid", how="left")
     )
+
     agg_prod = (
         filtered.groupby("product_id", as_index=False)["duration_sec"].sum()
         .assign(duration_hours=lambda d: d["duration_sec"] / 3600)
         .sort_values("duration_hours", ascending=False)
+        .merge(stats_prod, on="product_id", how="left")
     )
 
     # Подписи
@@ -369,8 +404,15 @@ try:
                     tooltip=[
                         alt.Tooltip("uuid_label:N", title="Station"),
                         alt.Tooltip("uuid:N", title="uuid"),
-                        alt.Tooltip("duration_hours:Q", format=",.2f", title="hours"),
-                        alt.Tooltip("duration_sec:Q", format=",.0f", title="seconds"),
+                        alt.Tooltip("duration_hours:Q", format=",.2f", title="Total (h)"),
+                        alt.Tooltip("duration_sec:Q", format=",.0f", title="Total (sec)"),
+                        # новые поля по сессиям
+                        alt.Tooltip("session_mean_hours:Q", format=",.2f", title="Avg session (h)"),
+                        alt.Tooltip("session_p25_hours:Q", format=",.2f", title="P25 session (h)"),
+                        alt.Tooltip("session_p75_hours:Q", format=",.2f", title="P75 session (h)"),
+                        alt.Tooltip("session_mean_sec:Q", format=",.0f", title="Avg session (sec)"),
+                        alt.Tooltip("session_p25_sec:Q", format=",.0f", title="P25 session (sec)"),
+                        alt.Tooltip("session_p75_sec:Q", format=",.0f", title="P75 session (sec)"),
                     ],
                 )
                 .properties(height=800)
@@ -390,8 +432,15 @@ try:
                     tooltip=[
                         alt.Tooltip("product_label:N", title="Product"),
                         alt.Tooltip("product_id:N", title="product_id"),
-                        alt.Tooltip("duration_hours:Q", format=",.2f", title="hours"),
-                        alt.Tooltip("duration_sec:Q", format=",.0f", title="seconds"),
+                        alt.Tooltip("duration_hours:Q", format=",.2f", title="Total (h)"),
+                        alt.Tooltip("duration_sec:Q", format=",.0f", title="Total (sec)"),
+                        # новые поля по сессиям
+                        alt.Tooltip("session_mean_hours:Q", format=",.2f", title="Avg session (h)"),
+                        alt.Tooltip("session_p25_hours:Q", format=",.2f", title="P25 session (h)"),
+                        alt.Tooltip("session_p75_hours:Q", format=",.2f", title="P75 session (h)"),
+                        alt.Tooltip("session_mean_sec:Q", format=",.0f", title="Avg session (sec)"),
+                        alt.Tooltip("session_p25_sec:Q", format=",.0f", title="P25 session (sec)"),
+                        alt.Tooltip("session_p75_sec:Q", format=",.0f", title="P75 session (sec)"),
                     ],
                 )
                 .properties(height=800)
