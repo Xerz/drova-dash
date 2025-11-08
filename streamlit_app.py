@@ -452,13 +452,13 @@ try:
     # Полные таблицы рейтингов
     st.subheader("Полный рейтинг по станциям")
     st.dataframe(
-        agg_uuid.assign(Station=agg_uuid["uuid_label"])[["Station", "uuid", "duration_hours", "duration_sec"]],
+        agg_uuid.assign(Station=agg_uuid["uuid_label"])[["Station", "uuid", "duration_hours", "duration_sec", "session_mean_hours", "session_p25_hours", "session_p75_hours"]],
         use_container_width=True
     )
 
     st.subheader("Полный рейтинг по продуктам")
     st.dataframe(
-        agg_prod.assign(Product=agg_prod["product_label"])[["Product", "product_id", "duration_hours", "duration_sec"]],
+        agg_prod.assign(Product=agg_prod["product_label"])[["Product", "product_id", "duration_hours", "duration_sec", "session_mean_hours", "session_p25_hours", "session_p75_hours"]],
         use_container_width=True
     )
 
