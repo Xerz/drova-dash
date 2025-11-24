@@ -480,15 +480,22 @@ try:
         # city_name может быть NaN — подменим меткой
         agg_city = (
             filtered.assign(city=lambda d: d["city_name"].fillna("Unknown"))
-            .groupby("city", as_index=False)["duration_sec"].sum()
-            .assign(duration_hours=lambda d: d["duration_sec"] / 3600)
+            .groupby("city", as_index=False)
+            .agg(
+                duration_sec=("duration_sec", "sum"),
+                n_stations=("uuid", "nunique"),
+            )
+            .assign(
+                duration_hours=lambda d: d["duration_sec"] / 3600,
+                minutes_per_station=lambda d: (d["duration_sec"] / 60) / d["n_stations"]
+            )
             .sort_values("duration_hours", ascending=False)
         )
 
-        # Топ-20 для графика
+        # Топ-20 по суммарным BUSY часам для графика
         agg_city_top20 = agg_city.head(20).copy()
 
-        st.subheader("By city (top-20)")
+        st.subheader("By city (top-20 по BUSY часам)")
         if not agg_city_top20.empty:
             chart_city = (
                 alt.Chart(agg_city_top20)
@@ -500,6 +507,8 @@ try:
                         alt.Tooltip("city:N", title="City"),
                         alt.Tooltip("duration_hours:Q", format=",.2f", title="hours"),
                         alt.Tooltip("duration_sec:Q", format=",.0f", title="seconds"),
+                        alt.Tooltip("n_stations:Q", title="stations"),
+                        alt.Tooltip("minutes_per_station:Q", format=",.2f", title="min per station"),
                     ],
                 )
                 .properties(height=800)  # чтобы было как на других графиках
@@ -511,14 +520,18 @@ try:
         # Полная таблица рейтинга по городам
         st.subheader("Полный рейтинг по городам")
         st.dataframe(
-            agg_city[["city", "duration_hours", "duration_sec"]],
+            agg_city[["city", "duration_hours", "duration_sec", "n_stations", "minutes_per_station"]],
             use_container_width=True
         )
 
         # (необязательно) Скачать CSV с рейтингом по городам
         csv_city = agg_city.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Download city ranking (CSV)", data=csv_city, file_name="ranking_by_city.csv",
-                           mime="text/csv")
+        st.download_button(
+            "⬇️ Download city ranking (CSV)",
+            data=csv_city,
+            file_name="ranking_by_city.csv",
+            mime="text/csv"
+        )
 
         # Treemap по городам (опционально, требует plotly)
         if not agg_city.empty:
@@ -531,6 +544,45 @@ try:
                 title="Treemap по BUSY часам (Cities)"
             )
             st.plotly_chart(fig_city, use_container_width=True)
+
+        # -------------------------------------
+        # Новый рейтинг: минут на одну станцию
+        # -------------------------------------
+        agg_city_mps_top20 = (
+            agg_city.sort_values("minutes_per_station", ascending=False)
+            .head(20)
+            .copy()
+        )
+
+        st.subheader("By city: минут на одну станцию (top-20)")
+        if not agg_city_mps_top20.empty:
+            chart_city_mps = (
+                alt.Chart(agg_city_mps_top20)
+                .mark_bar()
+                .encode(
+                    x=alt.X("minutes_per_station:Q", title="Minutes per station"),
+                    y=alt.Y("city:N", sort='-x', title="City"),
+                    tooltip=[
+                        alt.Tooltip("city:N", title="City"),
+                        alt.Tooltip("n_stations:Q", title="stations"),
+                        alt.Tooltip("minutes_per_station:Q", format=",.2f", title="min per station"),
+                        alt.Tooltip("duration_hours:Q", format=",.2f", title="total hours"),
+                    ],
+                )
+                .properties(height=800)
+            )
+            st.altair_chart(chart_city_mps, use_container_width=True)
+        else:
+            st.info("No data after filters (minutes per station).")
+
+        st.subheader("Полный рейтинг по городам (минут на одну станцию)")
+        st.dataframe(
+            agg_city.sort_values("minutes_per_station", ascending=False)[
+                ["city", "n_stations", "minutes_per_station", "duration_hours", "duration_sec"]
+            ],
+            use_container_width=True
+        )
+
 
 
 except Exception as e:
