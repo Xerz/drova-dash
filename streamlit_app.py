@@ -508,7 +508,7 @@ try:
                         alt.Tooltip("duration_hours:Q", format=",.2f", title="hours"),
                         alt.Tooltip("duration_sec:Q", format=",.0f", title="seconds"),
                         alt.Tooltip("n_stations:Q", title="stations"),
-                        alt.Tooltip("minutes_per_station:Q", format=",.2f", title="min per station"),
+                        alt.Tooltip("hours_per_station:Q", format=",.2f", title="h per station"),
                     ],
                 )
                 .properties(height=800)  # чтобы было как на других графиках
@@ -520,7 +520,7 @@ try:
         # Полная таблица рейтинга по городам
         st.subheader("Полный рейтинг по городам")
         st.dataframe(
-            agg_city[["city", "duration_hours", "duration_sec", "n_stations", "minutes_per_station"]],
+            agg_city[["city", "duration_hours", "duration_sec", "n_stations", "hours_per_station"]],
             use_container_width=True
         )
 
@@ -549,7 +549,7 @@ try:
         # Новый рейтинг: минут на одну станцию
         # -------------------------------------
         agg_city_mps_top20 = (
-            agg_city.sort_values("minutes_per_station", ascending=False)
+            agg_city.sort_values("hours_per_station", ascending=False)
             .head(20)
             .copy()
         )
@@ -560,12 +560,12 @@ try:
                 alt.Chart(agg_city_mps_top20)
                 .mark_bar()
                 .encode(
-                    x=alt.X("minutes_per_station:Q", title="Minutes per station"),
+                    x=alt.X("hours_per_station:Q", title="Hours per station"),
                     y=alt.Y("city:N", sort='-x', title="City"),
                     tooltip=[
                         alt.Tooltip("city:N", title="City"),
                         alt.Tooltip("n_stations:Q", title="stations"),
-                        alt.Tooltip("minutes_per_station:Q", format=",.2f", title="min per station"),
+                        alt.Tooltip("hours_per_station:Q", format=",.2f", title="h per station"),
                         alt.Tooltip("duration_hours:Q", format=",.2f", title="total hours"),
                     ],
                 )
@@ -577,8 +577,8 @@ try:
 
         st.subheader("Полный рейтинг по городам (минут на одну станцию)")
         st.dataframe(
-            agg_city.sort_values("minutes_per_station", ascending=False)[
-                ["city", "n_stations", "minutes_per_station", "duration_hours", "duration_sec"]
+            agg_city.sort_values("hours_per_station", ascending=False)[
+                ["city", "n_stations", "hours_per_station", "duration_hours", "duration_sec"]
             ],
             use_container_width=True
         )
