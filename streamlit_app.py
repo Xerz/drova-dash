@@ -487,7 +487,7 @@ try:
             )
             .assign(
                 duration_hours=lambda d: d["duration_sec"] / 3600,
-                minutes_per_station=lambda d: (d["duration_sec"] / 60) / d["n_stations"]
+                hours_per_station=lambda d: (d["duration_sec"] / 3600) / d["n_stations"]
             )
             .sort_values("duration_hours", ascending=False)
         )
