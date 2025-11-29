@@ -546,7 +546,7 @@ try:
             st.plotly_chart(fig_city, use_container_width=True)
 
         # -------------------------------------
-        # Новый рейтинг: минут на одну станцию
+        # Новый рейтинг: часов на одну станцию
         # -------------------------------------
         agg_city_mps_top20 = (
             agg_city.sort_values("hours_per_station", ascending=False)
@@ -554,7 +554,7 @@ try:
             .copy()
         )
 
-        st.subheader("By city: минут на одну станцию (top-20)")
+        st.subheader("By city: часов на одну станцию (top-20)")
         if not agg_city_mps_top20.empty:
             chart_city_mps = (
                 alt.Chart(agg_city_mps_top20)
@@ -575,7 +575,7 @@ try:
         else:
             st.info("No data after filters (minutes per station).")
 
-        st.subheader("Полный рейтинг по городам (минут на одну станцию)")
+        st.subheader("Полный рейтинг по городам (часов на одну станцию)")
         st.dataframe(
             agg_city.sort_values("hours_per_station", ascending=False)[
                 ["city", "n_stations", "hours_per_station", "duration_hours", "duration_sec"]
