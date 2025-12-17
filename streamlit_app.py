@@ -167,7 +167,7 @@ st.sidebar.header("Controls")
 # (2) Слайдер для «длинных» сессий: 4–30 часов (по умолчанию 12)
 threshold_hours = st.sidebar.slider(
     "Max session length (hours)",
-    min_value=4, max_value=30, value=12, step=1,
+    min_value=4, max_value=30, value=30, step=1,
     help="Сессии длиннее значения будут отфильтрованы"
 )
 
