@@ -25,31 +25,12 @@ PRODUCTS_URL = "https://services.drova.io/product-manager/product/listfull2"
 # -----------------------------
 @st.cache_data(show_spinner=False, ttl=600)
 def fetch_stations_dict(limit=1000, offset=0):
-    payload = {
-        "stationNameOrDescription": None,
-        "stationStatus": None,
-        "products": [],
-        "geo": None,
-        "requiredAccount": None,
-        "freeToPlay": None,
-        "license": None,
-        "limit": limit,
-        "offset": offset,
-        "published": True,
-    }
+    """Возвращает мапы uuid->name и uuid->city_name из таблицы server_info."""
+
     try:
-        r = requests.post(STATIONS_URL, json=payload, timeout=15)
-        r.raise_for_status()
-        data = r.json()
-        # вернём две мапы: uuid->name и uuid->city_name
-        uuid_to_name = {}
-        uuid_to_city = {}
-        for item in data:
-            if isinstance(item, dict):
-                u = item.get("uuid")
-                if u:
-                    uuid_to_name[u] = item.get("name")
-                    uuid_to_city[u] = item.get("city_name")  # <- ключ города
+        server_info = fetch_server_info(DB_PATH)
+        uuid_to_name = dict(zip(server_info["uuid"], server_info["name"]))
+        uuid_to_city = dict(zip(server_info["uuid"], server_info["city_name"]))
         return uuid_to_name, uuid_to_city
     except Exception as e:
         st.warning(f"Не удалось получить список станций: {e}")
@@ -67,6 +48,36 @@ def fetch_product_titles():
     except Exception as e:
         st.warning(f"Не удалось получить список продуктов: {e}")
         return {}
+
+
+@st.cache_data(show_spinner=False, ttl=600)
+def fetch_server_info(db_path: str) -> pd.DataFrame:
+    """Загружает таблицу server_info из SQLite."""
+
+    try:
+        with sqlite3.connect(db_path) as conn:
+            df = pd.read_sql_query(
+                """
+                SELECT
+                    uuid,
+                    name,
+                    city_name,
+                    processor,
+                    graphic_names,
+                    free_trial,
+                    product_number,
+                    ram_bytes,
+                    graphic_ram_bytes,
+                    longitude,
+                    latitude
+                FROM server_info
+                """,
+                conn,
+            )
+        return df
+    except Exception as e:
+        st.warning(f"Не удалось загрузить server_info: {e}")
+        return pd.DataFrame()
 
 
 @st.cache_data(show_spinner=False)
@@ -197,6 +208,7 @@ try:
     intervals_with_duration["duration_sec"] = (
         (intervals_with_duration["ended_at"] - intervals_with_duration["started_at"]).dt.total_seconds()
     )
+    intervals_with_duration["duration_minutes"] = intervals_with_duration["duration_sec"] / 60
 
     default_end = pd.Timestamp(datetime.today()).normalize()
     default_start = default_end - timedelta(days=30)
@@ -230,14 +242,26 @@ try:
     )
     intervals_with_duration = intervals_with_duration[date_mask].copy()
 
+    server_info_df = fetch_server_info(DB_PATH)
+
     # Справочники имён
     uuid_to_name, uuid_to_city = fetch_stations_dict()
     pid_to_title = fetch_product_titles()
 
+    intervals_with_duration = intervals_with_duration.merge(
+        server_info_df,
+        on="uuid",
+        how="left",
+    )
+
     # Человекочитаемые подписи
     intervals_with_duration["station_name"] = intervals_with_duration["uuid"].map(uuid_to_name)
     intervals_with_duration["product_title"] = intervals_with_duration["product_id"].map(pid_to_title)
-    intervals_with_duration["city_name"] = intervals_with_duration["uuid"].map(uuid_to_city)  # <- НОВОЕ
+    intervals_with_duration["city_name"] = intervals_with_duration["city_name"].fillna(intervals_with_duration["uuid"].map(uuid_to_city))
+    intervals_with_duration["city_name"] = intervals_with_duration["city_name"].fillna("Unknown")
+    intervals_with_duration["processor"] = intervals_with_duration["processor"].fillna("Unknown")
+    intervals_with_duration["graphic_names"] = intervals_with_duration["graphic_names"].fillna("Unknown")
+    intervals_with_duration["free_trial"] = intervals_with_duration["free_trial"].fillna(0)
 
     # Таблица длительностей (видимая)
     # st.dataframe(
@@ -255,6 +279,8 @@ try:
     all_uuids = sorted(intervals_with_duration["uuid"].dropna().unique().tolist())
     all_products = sorted(intervals_with_duration["product_id"].dropna().unique().tolist())
     all_cities = sorted(intervals_with_duration["city_name"].dropna().unique().tolist())
+    all_processors = sorted(intervals_with_duration["processor"].dropna().unique().tolist())
+    all_graphics = sorted(intervals_with_duration["graphic_names"].dropna().unique().tolist())
 
 
     # Функции форматирования "человеческих" подписей
@@ -274,14 +300,20 @@ try:
     if "enable_uuid" not in ss: ss.enable_uuid = False
     if "enable_prod" not in ss: ss.enable_prod = False
     if "enable_city" not in ss: ss.enable_city = False
+    if "enable_processor" not in ss: ss.enable_processor = False
+    if "enable_graphic" not in ss: ss.enable_graphic = False
     if "uuid_sel" not in ss: ss.uuid_sel = []
     if "prod_sel" not in ss: ss.prod_sel = []
     if "city_sel" not in ss: ss.city_sel = []  # стартуем пустым
+    if "processor_sel" not in ss: ss.processor_sel = []
+    if "graphic_sel" not in ss: ss.graphic_sel = []
 
     # Синхронизация с текущими опциями (БЕЗ фолбэка «всё», чтобы крестик работал)
     ss.uuid_sel = [u for u in ss.uuid_sel if u in all_uuids]
     ss.prod_sel = [p for p in ss.prod_sel if p in all_products]
     ss.city_sel = [c for c in ss.city_sel if c in all_cities]
+    ss.processor_sel = [p for p in ss.processor_sel if p in all_processors]
+    ss.graphic_sel = [g for g in ss.graphic_sel if g in all_graphics]
 
     # Чекбоксы (без value=) и мультиселекты (без default=), состояние хранится в key
     st.sidebar.checkbox("Filter by station", key="enable_uuid")
@@ -311,18 +343,78 @@ try:
             help="Выбери один или несколько городов. Пусто — ничего не показывать."
         )
 
+    st.sidebar.checkbox("Filter by processor", key="enable_processor")
+    if ss.enable_processor:
+        st.sidebar.multiselect(
+            "Processor",
+            options=all_processors,
+            key="processor_sel",
+            help="Фильтр по названию CPU",
+        )
+
+    st.sidebar.checkbox("Filter by graphic card", key="enable_graphic")
+    if ss.enable_graphic:
+        st.sidebar.multiselect(
+            "Graphic names",
+            options=all_graphics,
+            key="graphic_sel",
+            help="Фильтр по GPU",
+        )
+
+    free_trial_only = st.sidebar.checkbox("Только Free trial станции")
+
+    # Диапазоны
+    def _range_slider(column, label, step=1):
+        col_data = intervals_with_duration[column].dropna()
+        if col_data.empty:
+            st.sidebar.info(f"Нет данных для {label}")
+            return None
+        min_val = int(col_data.min())
+        max_val = int(col_data.max())
+        return st.sidebar.slider(
+            label,
+            min_value=min_val,
+            max_value=max_val,
+            value=(min_val, max_val),
+            step=max(step, 1),
+        )
+
+    product_number_range = _range_slider("product_number", "Количество продуктов (диапазон)")
+    ram_range = _range_slider("ram_bytes", "RAM bytes (диапазон)")
+    graphic_ram_range = _range_slider("graphic_ram_bytes", "Graphic RAM bytes (диапазон)")
+
     # Итоговые выборы
     selected_uuids = ss.uuid_sel if ss.enable_uuid else all_uuids
     selected_products = ss.prod_sel if ss.enable_prod else all_products
     selected_city = ss.city_sel if ss.enable_city else all_cities
+    selected_processors = ss.processor_sel if ss.enable_processor else all_processors
+    selected_graphics = ss.graphic_sel if ss.enable_graphic else all_graphics
 
     # Применяем фильтрацию
     filtered = intervals_with_duration[
         intervals_with_duration["uuid"].isin(selected_uuids)
         & intervals_with_duration["product_id"].isin(selected_products)
         & intervals_with_duration["city_name"].isin(selected_city)
+        & intervals_with_duration["processor"].isin(selected_processors)
+        & intervals_with_duration["graphic_names"].isin(selected_graphics)
         & intervals_with_duration["duration_sec"].notna()
         ].copy()
+
+    if free_trial_only:
+        filtered = filtered[filtered["free_trial"] == 1]
+
+    if product_number_range:
+        filtered = filtered[
+            filtered["product_number"].between(product_number_range[0], product_number_range[1])
+        ]
+    if ram_range:
+        filtered = filtered[
+            filtered["ram_bytes"].between(ram_range[0], ram_range[1])
+        ]
+    if graphic_ram_range:
+        filtered = filtered[
+            filtered["graphic_ram_bytes"].between(graphic_ram_range[0], graphic_ram_range[1])
+        ]
 
     min_date = filtered["started_at"].min()
     max_date = filtered["ended_at"].max()
@@ -582,6 +674,112 @@ try:
             ],
             use_container_width=True
         )
+
+        def render_group_rank(df: pd.DataFrame, column: str, label: str):
+            agg = (
+                df.assign(group=lambda d: d[column].fillna("Unknown"))
+                .groupby("group", as_index=False)
+                .agg(
+                    duration_sec=("duration_sec", "sum"),
+                    n_stations=("uuid", "nunique"),
+                )
+                .assign(
+                    duration_hours=lambda d: d["duration_sec"] / 3600,
+                    hours_per_station=lambda d: (d["duration_sec"] / 3600) / d["n_stations"]
+                )
+                .sort_values("duration_hours", ascending=False)
+            )
+
+            top20 = agg.head(20)
+            st.subheader(f"By {label} (top-20 по BUSY часам)")
+            if not top20.empty:
+                chart = (
+                    alt.Chart(top20)
+                    .mark_bar()
+                    .encode(
+                        x=alt.X("duration_hours:Q", title="Total BUSY hours"),
+                        y=alt.Y("group:N", sort='-x', title=label),
+                        tooltip=[
+                            alt.Tooltip("group:N", title=label),
+                            alt.Tooltip("duration_hours:Q", format=",.2f", title="hours"),
+                            alt.Tooltip("duration_sec:Q", format=",.0f", title="seconds"),
+                            alt.Tooltip("n_stations:Q", title="stations"),
+                            alt.Tooltip("hours_per_station:Q", format=",.2f", title="h per station"),
+                        ],
+                    )
+                    .properties(height=800)
+                )
+                st.altair_chart(chart, use_container_width=True)
+            else:
+                st.info("No data after filters.")
+
+            st.subheader(f"Полный рейтинг по {label}")
+            st.dataframe(
+                agg[["group", "duration_hours", "duration_sec", "n_stations", "hours_per_station"]],
+                use_container_width=True,
+            )
+
+            per_station_top20 = (
+                agg.sort_values("hours_per_station", ascending=False)
+                .head(20)
+                .copy()
+            )
+            st.subheader(f"By {label}: часов на одну станцию (top-20)")
+            if not per_station_top20.empty:
+                chart_mps = (
+                    alt.Chart(per_station_top20)
+                    .mark_bar()
+                    .encode(
+                        x=alt.X("hours_per_station:Q", title="Hours per station"),
+                        y=alt.Y("group:N", sort='-x', title=label),
+                        tooltip=[
+                            alt.Tooltip("group:N", title=label),
+                            alt.Tooltip("n_stations:Q", title="stations"),
+                            alt.Tooltip("hours_per_station:Q", format=",.2f", title="h per station"),
+                            alt.Tooltip("duration_hours:Q", format=",.2f", title="total hours"),
+                        ],
+                    )
+                    .properties(height=800)
+                )
+                st.altair_chart(chart_mps, use_container_width=True)
+            else:
+                st.info("No data after filters (minutes per station).")
+
+            st.subheader(f"Полный рейтинг по {label} (часов на одну станцию)")
+            st.dataframe(
+                agg.sort_values("hours_per_station", ascending=False)[
+                    ["group", "n_stations", "hours_per_station", "duration_hours", "duration_sec"]
+                ],
+                use_container_width=True,
+            )
+
+        render_group_rank(filtered, "processor", "processor")
+        render_group_rank(filtered, "graphic_names", "graphic card")
+
+        map_data = (
+            filtered.dropna(subset=["latitude", "longitude"])
+            .groupby(["latitude", "longitude"], as_index=False)
+            .agg(duration_minutes=("duration_minutes", "sum"))
+        )
+
+        st.subheader("Minutes played on map")
+        if not map_data.empty:
+            fig_map = px.scatter_mapbox(
+                map_data,
+                lat="latitude",
+                lon="longitude",
+                size="duration_minutes",
+                color="duration_minutes",
+                color_continuous_scale="Blues",
+                size_max=30,
+                zoom=2,
+                hover_data={"duration_minutes": ":.2f"},
+                title="BUSY minutes by station location",
+            )
+            fig_map.update_layout(mapbox_style="open-street-map")
+            st.plotly_chart(fig_map, use_container_width=True)
+        else:
+            st.info("Нет координат для отображения на карте.")
 
 
 
