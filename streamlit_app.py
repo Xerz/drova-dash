@@ -15,7 +15,7 @@ import plotly.express as px
 st.set_page_config(page_title="Station Changes Dashboard", layout="wide")
 # st.title("📊 Station Changes → BUSY Intervals")
 
-DB_PATH = "stations20251221.db"
+DB_PATH = "stations20251230.db"
 STATIONS_URL = "https://services.drova.io/server-manager/servers/public/web"
 PRODUCTS_URL = "https://services.drova.io/product-manager/product/listfull2"
 
@@ -468,6 +468,26 @@ try:
         .merge(stats_uuid, on="uuid", how="left")
     )
 
+    station_attributes = (
+        intervals_with_duration[
+            [
+                "uuid",
+                "city_name",
+                "product_number",
+                "processor",
+                "graphic_names",
+                "free_trial",
+                "ram_bytes",
+                "graphic_ram_bytes",
+                "longitude",
+                "latitude",
+            ]
+        ]
+        .drop_duplicates("uuid")
+    )
+
+    agg_uuid = agg_uuid.merge(station_attributes, on="uuid", how="left")
+
     agg_prod = (
         filtered.groupby("product_id", as_index=False)["duration_sec"].sum()
         .assign(duration_hours=lambda d: d["duration_sec"] / 3600)
@@ -544,8 +564,38 @@ try:
     # Полные таблицы рейтингов
     st.subheader("Полный рейтинг по станциям")
     st.dataframe(
-        agg_uuid.assign(Station=agg_uuid["uuid_label"])[["Station", "uuid", "duration_hours", "duration_sec", "session_mean_hours", "session_p25_hours", "session_p75_hours"]],
-        use_container_width=True
+        agg_uuid.assign(
+            Station=agg_uuid["uuid_label"],
+            City=agg_uuid["city_name"],
+            Product_number=agg_uuid["product_number"],
+            Processor=agg_uuid["processor"],
+            Graphic_card=agg_uuid["graphic_names"],
+            Free_trial_enabled=agg_uuid["free_trial"],
+            RAM_bytes=agg_uuid["ram_bytes"],
+            Graphic_RAM_bytes=agg_uuid["graphic_ram_bytes"],
+            Longitude=agg_uuid["longitude"],
+            Latitude=agg_uuid["latitude"],
+        )[
+            [
+                "Station",
+                "uuid",
+                "duration_hours",
+                "duration_sec",
+                "session_mean_hours",
+                "session_p25_hours",
+                "session_p75_hours",
+                "City",
+                "Product_number",
+                "Processor",
+                "Graphic_card",
+                "Free_trial_enabled",
+                "RAM_bytes",
+                "Graphic_RAM_bytes",
+                "Longitude",
+                "Latitude",
+            ]
+        ],
+        use_container_width=True,
     )
 
     st.subheader("Полный рейтинг по продуктам")
