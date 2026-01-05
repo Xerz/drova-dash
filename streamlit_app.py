@@ -80,7 +80,6 @@ def fetch_server_info(db_path: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-@st.cache_data(show_spinner=False)
 def load_station_changes(path: str) -> pd.DataFrame:
     with sqlite3.connect(path) as conn:
         df = pd.read_sql_query(
