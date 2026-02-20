@@ -11,6 +11,7 @@ class TimeControls:
     threshold_hours: int
     selected_start: pd.Timestamp
     selected_end: pd.Timestamp
+    rolling_window_days: int
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,16 @@ def render_time_controls() -> TimeControls:
     if start_date > end_date:
         start_date, end_date = end_date, start_date
 
+    date_range_days = max((end_date - start_date).days + 1, 1)
+    rolling_window_days = st.sidebar.slider(
+        "Sliding window (days)",
+        min_value=1,
+        max_value=date_range_days,
+        value=min(7, date_range_days),
+        step=1,
+        help="Окно для скользящих метрик по датам",
+    )
+
     selected_start = pd.Timestamp(start_date).normalize()
     selected_end = (
         pd.Timestamp(end_date).normalize()
@@ -77,6 +88,7 @@ def render_time_controls() -> TimeControls:
         threshold_hours=threshold_hours,
         selected_start=selected_start,
         selected_end=selected_end,
+        rolling_window_days=rolling_window_days,
     )
 
 

@@ -17,6 +17,58 @@ def render_session_range_header(filtered: pd.DataFrame) -> None:
         st.markdown("### Информация по сессиям")
 
 
+def render_rolling_window_charts(
+    rolling_metrics: pd.DataFrame, window_days: int
+) -> None:
+    st.markdown(f"### Скользящие метрики (окно {window_days} дн.)")
+    if rolling_metrics.empty:
+        st.info("Недостаточно данных для скользящих метрик.")
+        return
+
+    left, right = st.columns(2)
+    with left:
+        st.subheader("Активные станции в окне")
+        active_chart = (
+            alt.Chart(rolling_metrics)
+            .mark_line()
+            .encode(
+                x=alt.X("date:T", title="Date"),
+                y=alt.Y("active_stations_window:Q", title="Stations"),
+                tooltip=[
+                    alt.Tooltip("date:T", title="Date"),
+                    alt.Tooltip(
+                        "active_stations_window:Q",
+                        title="Active stations",
+                        format=",.0f",
+                    ),
+                ],
+            )
+            .properties(height=320)
+        )
+        st.altair_chart(active_chart, use_container_width=True)
+
+    with right:
+        st.subheader("Сыграно часов в окне")
+        hours_chart = (
+            alt.Chart(rolling_metrics)
+            .mark_line()
+            .encode(
+                x=alt.X("date:T", title="Date"),
+                y=alt.Y("played_hours_window:Q", title="Hours"),
+                tooltip=[
+                    alt.Tooltip("date:T", title="Date"),
+                    alt.Tooltip(
+                        "played_hours_window:Q",
+                        title="Played hours",
+                        format=",.2f",
+                    ),
+                ],
+            )
+            .properties(height=320)
+        )
+        st.altair_chart(hours_chart, use_container_width=True)
+
+
 def render_station_product_rankings(agg_uuid: pd.DataFrame, agg_prod: pd.DataFrame) -> None:
     st.markdown("### 📈 Rankings by total BUSY duration (filtered)")
     agg_uuid_top20 = agg_uuid.head(20).copy()

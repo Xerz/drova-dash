@@ -3,6 +3,7 @@ import os
 import streamlit as st
 
 from app.aggregations import (
+    build_rolling_window_metrics,
     build_station_product_rankings,
 )
 from app.config import DB_PATH
@@ -15,6 +16,7 @@ from app.filters import (
 from app.views import (
     render_extended_analytics,
     render_product_treemap,
+    render_rolling_window_charts,
     render_session_range_header,
     render_station_product_rankings,
 )
@@ -48,6 +50,13 @@ try:
     filtered = apply_sidebar_filters(intervals_with_duration, sidebar_filters)
 
     render_session_range_header(filtered)
+    rolling_metrics = build_rolling_window_metrics(
+        filtered,
+        time_controls.rolling_window_days,
+        range_start=time_controls.selected_start,
+        range_end=time_controls.selected_end,
+    )
+    render_rolling_window_charts(rolling_metrics, time_controls.rolling_window_days)
 
     agg_uuid, agg_prod = build_station_product_rankings(
         filtered=filtered,
