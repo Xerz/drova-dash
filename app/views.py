@@ -917,21 +917,45 @@ def render_group_rank(agg: pd.DataFrame, label: str) -> None:
 
 
 def render_minutes_map(map_data: pd.DataFrame) -> None:
-    st.subheader("Minutes played on map")
+    st.subheader("Minutes played heatmap")
+    st.caption(
+        "Непрерывная тепловая карта BUSY-активности по географии. "
+        "Для лучшего контраста интенсивность ограничена на уровне P95."
+    )
     if not map_data.empty:
-        fig_map = px.scatter_mapbox(
-            map_data,
+        heat_data = map_data.copy()
+        p95 = float(heat_data["duration_minutes"].quantile(0.95))
+        if not pd.notna(p95) or p95 <= 0:
+            p95 = float(heat_data["duration_minutes"].max())
+        if p95 <= 0:
+            st.info("Недостаточно данных для тепловой карты.")
+            return
+
+        heat_data["intensity_minutes"] = heat_data["duration_minutes"].clip(upper=p95)
+        center = {
+            "lat": float(heat_data["latitude"].mean()),
+            "lon": float(heat_data["longitude"].mean()),
+        }
+        fig_map = px.density_mapbox(
+            heat_data,
             lat="latitude",
             lon="longitude",
-            size="duration_minutes",
-            color="duration_minutes",
-            color_continuous_scale="Blues",
-            size_max=30,
+            z="intensity_minutes",
+            radius=30,
+            center=center,
             zoom=2,
-            hover_data={"duration_minutes": ":.2f"},
-            title="BUSY minutes by station location",
+            mapbox_style="open-street-map",
+            color_continuous_scale="YlOrRd",
+            hover_data={
+                "duration_minutes": ":.2f",
+                "intensity_minutes": ":.2f",
+            },
+            title="BUSY minutes heatmap (continuous)",
         )
-        fig_map.update_layout(mapbox_style="open-street-map")
+        fig_map.update_layout(
+            coloraxis_colorbar=dict(title="Minutes"),
+            margin=dict(l=0, r=0, t=48, b=0),
+        )
         st.plotly_chart(fig_map, width="stretch")
     else:
         st.info("Нет координат для отображения на карте.")
