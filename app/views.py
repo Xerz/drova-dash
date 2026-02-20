@@ -1,3 +1,5 @@
+import inspect
+
 import altair as alt
 import pandas as pd
 import plotly.express as px
@@ -18,6 +20,35 @@ from app.aggregations import (
     build_utilization_metrics,
     build_volatility_metrics,
 )
+
+
+def _patch_streamlit_width_compat() -> None:
+    # Newer Streamlit uses `width=...`; older versions still expect `use_container_width=...`.
+    # Keep a single code path in views and map width dynamically when needed.
+    for name in ("altair_chart", "dataframe", "plotly_chart"):
+        fn = getattr(st, name, None)
+        if fn is None:
+            continue
+        try:
+            params = inspect.signature(fn).parameters
+        except (TypeError, ValueError):
+            continue
+        if "width" in params or "use_container_width" not in params:
+            continue
+
+        def _wrapped(*args, __fn=fn, **kwargs):
+            width = kwargs.pop("width", None)
+            if width is not None and "use_container_width" not in kwargs:
+                if width == "stretch":
+                    kwargs["use_container_width"] = True
+                elif width == "content":
+                    kwargs["use_container_width"] = False
+            return __fn(*args, **kwargs)
+
+        setattr(st, name, _wrapped)
+
+
+_patch_streamlit_width_compat()
 
 
 def render_session_range_header(filtered: pd.DataFrame) -> None:
@@ -59,7 +90,7 @@ def render_rolling_window_charts(
             )
             .properties(height=320)
         )
-        st.altair_chart(active_chart, use_container_width=True)
+        st.altair_chart(active_chart, width="stretch")
 
     with right:
         st.subheader("Сыграно часов в окне")
@@ -80,7 +111,7 @@ def render_rolling_window_charts(
             )
             .properties(height=320)
         )
-        st.altair_chart(hours_chart, use_container_width=True)
+        st.altair_chart(hours_chart, width="stretch")
 
 
 def render_product_share_wow_mom(filtered: pd.DataFrame, agg_prod: pd.DataFrame) -> None:
@@ -116,7 +147,7 @@ def render_product_share_wow_mom(filtered: pd.DataFrame, agg_prod: pd.DataFrame)
         )
         .properties(height=360)
     )
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
     st.dataframe(
         share_df[
             [
@@ -128,7 +159,7 @@ def render_product_share_wow_mom(filtered: pd.DataFrame, agg_prod: pd.DataFrame)
                 "mom_delta_pp",
             ]
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -168,7 +199,7 @@ def render_product_adoption(filtered: pd.DataFrame, agg_prod: pd.DataFrame) -> N
         )
         .properties(height=360)
     )
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
     st.dataframe(
         adoption_df[
             [
@@ -180,7 +211,7 @@ def render_product_adoption(filtered: pd.DataFrame, agg_prod: pd.DataFrame) -> N
                 "adoption_rate_30d_pct",
             ]
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -215,7 +246,7 @@ def render_free_trial_impact(filtered: pd.DataFrame) -> None:
         )
         .properties(height=320)
     )
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
 
 
 def render_demand_heatmap(filtered: pd.DataFrame) -> None:
@@ -244,7 +275,7 @@ def render_demand_heatmap(filtered: pd.DataFrame) -> None:
         )
         .properties(height=260)
     )
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
 
 
 def render_product_cannibalization(filtered: pd.DataFrame, agg_prod: pd.DataFrame) -> None:
@@ -278,7 +309,7 @@ def render_product_cannibalization(filtered: pd.DataFrame, agg_prod: pd.DataFram
         )
         .properties(height=360)
     )
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
     st.dataframe(
         shift[
             [
@@ -289,7 +320,7 @@ def render_product_cannibalization(filtered: pd.DataFrame, agg_prod: pd.DataFram
                 "delta_pp",
             ]
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
     if pairs.empty:
@@ -326,7 +357,7 @@ def render_product_cannibalization(filtered: pd.DataFrame, agg_prod: pd.DataFram
                 "compensation_pct",
             ]
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -375,8 +406,8 @@ def render_utilization_metrics(
         )
         .properties(height=360)
     )
-    st.altair_chart(chart, use_container_width=True)
-    st.dataframe(city_df, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
+    st.dataframe(city_df, width="stretch")
 
 
 def render_idle_station_metrics(filtered: pd.DataFrame, station_scope: pd.DataFrame) -> None:
@@ -411,10 +442,10 @@ def render_idle_station_metrics(filtered: pd.DataFrame, station_scope: pd.DataFr
             )
             .properties(height=320)
         )
-        st.altair_chart(chart, use_container_width=True)
+        st.altair_chart(chart, width="stretch")
 
     if not idle_df.empty:
-        st.dataframe(idle_df, use_container_width=True)
+        st.dataframe(idle_df, width="stretch")
 
 
 def render_concentration_metrics(
@@ -457,7 +488,7 @@ def render_concentration_metrics(
                 )
                 .properties(height=320)
             )
-            st.altair_chart(station_chart, use_container_width=True)
+            st.altair_chart(station_chart, width="stretch")
     with right:
         if not product_df.empty:
             product_labels = agg_prod[["product_id", "product_label"]].drop_duplicates("product_id")
@@ -476,7 +507,7 @@ def render_concentration_metrics(
                 )
                 .properties(height=320)
             )
-            st.altair_chart(product_chart, use_container_width=True)
+            st.altair_chart(product_chart, width="stretch")
 
 
 def render_volatility_metrics(filtered: pd.DataFrame, agg_uuid: pd.DataFrame) -> None:
@@ -515,8 +546,8 @@ def render_volatility_metrics(filtered: pd.DataFrame, agg_uuid: pd.DataFrame) ->
                 )
                 .properties(height=320)
             )
-            st.altair_chart(city_chart, use_container_width=True)
-            st.dataframe(city_stats.head(20), use_container_width=True)
+            st.altair_chart(city_chart, width="stretch")
+            st.dataframe(city_stats.head(20), width="stretch")
 
     with right:
         if not station_stats.empty:
@@ -542,8 +573,8 @@ def render_volatility_metrics(filtered: pd.DataFrame, agg_uuid: pd.DataFrame) ->
                 )
                 .properties(height=320)
             )
-            st.altair_chart(station_chart, use_container_width=True)
-            st.dataframe(station_stats.head(20), use_container_width=True)
+            st.altair_chart(station_chart, width="stretch")
+            st.dataframe(station_stats.head(20), width="stretch")
 
 
 def render_station_retention_metrics(filtered: pd.DataFrame) -> None:
@@ -586,8 +617,8 @@ def render_station_retention_metrics(filtered: pd.DataFrame) -> None:
         )
         .properties(height=280)
     )
-    st.altair_chart(chart, use_container_width=True)
-    st.dataframe(retention_df, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
+    st.dataframe(retention_df, width="stretch")
 
 
 def render_strategic_metrics(
@@ -640,7 +671,7 @@ def render_station_product_rankings(agg_uuid: pd.DataFrame, agg_prod: pd.DataFra
                 )
                 .properties(height=800)
             )
-            st.altair_chart(chart_uuid, use_container_width=True)
+            st.altair_chart(chart_uuid, width="stretch")
         else:
             st.info("No data after filters.")
 
@@ -668,7 +699,7 @@ def render_station_product_rankings(agg_uuid: pd.DataFrame, agg_prod: pd.DataFra
                 )
                 .properties(height=800)
             )
-            st.altair_chart(chart_prod, use_container_width=True)
+            st.altair_chart(chart_prod, width="stretch")
         else:
             st.info("No data after filters.")
 
@@ -705,7 +736,7 @@ def render_station_product_rankings(agg_uuid: pd.DataFrame, agg_prod: pd.DataFra
                 "Latitude",
             ]
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
     st.subheader("Полный рейтинг по продуктам")
@@ -721,7 +752,7 @@ def render_station_product_rankings(agg_uuid: pd.DataFrame, agg_prod: pd.DataFra
                 "session_p75_hours",
             ]
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -736,7 +767,7 @@ def render_product_treemap(agg_prod: pd.DataFrame) -> None:
         color_continuous_scale="Blues",
         title="Treemap по BUSY часам (Products)",
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_city_rankings(agg_city: pd.DataFrame) -> None:
@@ -760,14 +791,14 @@ def render_city_rankings(agg_city: pd.DataFrame) -> None:
             )
             .properties(height=800)
         )
-        st.altair_chart(chart_city, use_container_width=True)
+        st.altair_chart(chart_city, width="stretch")
     else:
         st.info("No data after filters.")
 
     st.subheader("Полный рейтинг по городам")
     st.dataframe(
         agg_city[["city", "duration_hours", "duration_sec", "n_stations", "hours_per_station"]],
-        use_container_width=True,
+        width="stretch",
     )
 
     csv_city = agg_city.to_csv(index=False).encode("utf-8")
@@ -787,7 +818,7 @@ def render_city_rankings(agg_city: pd.DataFrame) -> None:
             color_continuous_scale="Blues",
             title="Treemap по BUSY часам (Cities)",
         )
-        st.plotly_chart(fig_city, use_container_width=True)
+        st.plotly_chart(fig_city, width="stretch")
 
     agg_city_mps_top20 = (
         agg_city.sort_values("hours_per_station", ascending=False).head(20).copy()
@@ -809,7 +840,7 @@ def render_city_rankings(agg_city: pd.DataFrame) -> None:
             )
             .properties(height=800)
         )
-        st.altair_chart(chart_city_mps, use_container_width=True)
+        st.altair_chart(chart_city_mps, width="stretch")
     else:
         st.info("No data after filters (minutes per station).")
 
@@ -818,7 +849,7 @@ def render_city_rankings(agg_city: pd.DataFrame) -> None:
         agg_city.sort_values("hours_per_station", ascending=False)[
             ["city", "n_stations", "hours_per_station", "duration_hours", "duration_sec"]
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -842,14 +873,14 @@ def render_group_rank(agg: pd.DataFrame, label: str) -> None:
             )
             .properties(height=800)
         )
-        st.altair_chart(chart, use_container_width=True)
+        st.altair_chart(chart, width="stretch")
     else:
         st.info("No data after filters.")
 
     st.subheader(f"Полный рейтинг по {label}")
     st.dataframe(
         agg[["group", "duration_hours", "duration_sec", "n_stations", "hours_per_station"]],
-        use_container_width=True,
+        width="stretch",
     )
 
     per_station_top20 = (
@@ -872,7 +903,7 @@ def render_group_rank(agg: pd.DataFrame, label: str) -> None:
             )
             .properties(height=800)
         )
-        st.altair_chart(chart_mps, use_container_width=True)
+        st.altair_chart(chart_mps, width="stretch")
     else:
         st.info("No data after filters (minutes per station).")
 
@@ -881,7 +912,7 @@ def render_group_rank(agg: pd.DataFrame, label: str) -> None:
         agg.sort_values("hours_per_station", ascending=False)[
             ["group", "n_stations", "hours_per_station", "duration_hours", "duration_sec"]
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -901,7 +932,7 @@ def render_minutes_map(map_data: pd.DataFrame) -> None:
             title="BUSY minutes by station location",
         )
         fig_map.update_layout(mapbox_style="open-street-map")
-        st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(fig_map, width="stretch")
     else:
         st.info("Нет координат для отображения на карте.")
 
