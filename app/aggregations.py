@@ -182,10 +182,14 @@ def build_rolling_window_metrics(
 
         rolling_active_counts.append(len(station_presence))
 
-    return pd.DataFrame(
+    out = pd.DataFrame(
         {
             "date": full_dates,
             "active_stations_window": rolling_active_counts,
             "played_hours_window": rolling_hours.values,
         }
     )
+    # Hide leading partial window points; first visible point is first full window.
+    first_window_date = full_dates[0] + pd.Timedelta(days=max(window_days - 1, 0))
+    out = out[out["date"] >= first_window_date].reset_index(drop=True)
+    return out
