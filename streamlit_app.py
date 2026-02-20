@@ -3,9 +3,6 @@ import os
 import streamlit as st
 
 from app.aggregations import (
-    build_city_ranking,
-    build_group_ranking,
-    build_map_data,
     build_station_product_rankings,
 )
 from app.config import DB_PATH
@@ -16,9 +13,7 @@ from app.filters import (
     render_time_controls,
 )
 from app.views import (
-    render_city_rankings,
-    render_group_rank,
-    render_minutes_map,
+    render_extended_analytics,
     render_product_treemap,
     render_session_range_header,
     render_station_product_rankings,
@@ -62,18 +57,7 @@ try:
     )
     render_station_product_rankings(agg_uuid, agg_prod)
     render_product_treemap(agg_prod)
-
-    if not agg_prod.empty:
-        agg_city = build_city_ranking(filtered)
-        render_city_rankings(agg_city)
-
-        processor_rank = build_group_ranking(filtered, "processor")
-        graphics_rank = build_group_ranking(filtered, "graphic_names")
-        render_group_rank(processor_rank, "processor")
-        render_group_rank(graphics_rank, "graphic card")
-
-        map_data = build_map_data(filtered)
-        render_minutes_map(map_data)
+    render_extended_analytics(filtered, agg_prod)
 
 
 
