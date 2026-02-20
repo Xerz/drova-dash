@@ -189,7 +189,15 @@ def build_rolling_window_metrics(
             "played_hours_window": rolling_hours.values,
         }
     )
-    # Hide leading partial window points; first visible point is first full window.
-    first_window_date = full_dates[0] + pd.Timedelta(days=max(window_days - 1, 0))
-    out = out[out["date"] >= first_window_date].reset_index(drop=True)
+    # Hide partial windows: require full window by selected range and by actual data span.
+    window_offset = pd.Timedelta(days=max(window_days - 1, 0))
+    first_window_by_range = full_dates[0] + window_offset
+    first_data_date = pd.Timestamp(base["date"].min()).normalize()
+    first_window_by_data = first_data_date + window_offset
+    visible_start = (
+        first_window_by_range
+        if first_window_by_range >= first_window_by_data
+        else first_window_by_data
+    )
+    out = out[out["date"] >= visible_start].reset_index(drop=True)
     return out

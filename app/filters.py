@@ -68,11 +68,12 @@ def render_time_controls() -> TimeControls:
         start_date, end_date = end_date, start_date
 
     date_range_days = max((end_date - start_date).days + 1, 1)
+    max_window_days = 90
     rolling_window_days = st.sidebar.slider(
         "Sliding window (days)",
         min_value=1,
-        max_value=date_range_days,
-        value=min(7, date_range_days),
+        max_value=max_window_days,
+        value=min(7, date_range_days, max_window_days),
         step=1,
         help="Окно для скользящих метрик по датам",
     )
