@@ -8,6 +8,7 @@ from app.aggregations import (
 )
 from app.config import DB_PATH
 from app.filters import (
+    apply_station_scope_filters,
     apply_sidebar_filters,
     ensure_legacy_session_state,
     render_sidebar_filters,
@@ -18,6 +19,7 @@ from app.views import (
     render_product_treemap,
     render_rolling_window_charts,
     render_session_range_header,
+    render_strategic_metrics,
     render_station_product_rankings,
 )
 from app.workflow import load_prepared_intervals
@@ -38,7 +40,7 @@ try:
     if not os.path.exists(DB_PATH):
         st.error(f"Не найден файл БД: {DB_PATH}. Помести stations.db рядом с приложением.")
         st.stop()
-    intervals_with_duration, uuid_to_name, pid_to_title = load_prepared_intervals(
+    intervals_with_duration, uuid_to_name, pid_to_title, server_info_df = load_prepared_intervals(
         DB_PATH, time_controls
     )
 
@@ -48,6 +50,7 @@ try:
         pid_to_title=pid_to_title,
     )
     filtered = apply_sidebar_filters(intervals_with_duration, sidebar_filters)
+    station_scope = apply_station_scope_filters(server_info_df, sidebar_filters)
 
     render_session_range_header(filtered)
     rolling_metrics = build_rolling_window_metrics(
@@ -63,6 +66,14 @@ try:
         intervals_with_duration=intervals_with_duration,
         uuid_to_name=uuid_to_name,
         pid_to_title=pid_to_title,
+    )
+    render_strategic_metrics(
+        filtered,
+        agg_uuid,
+        agg_prod,
+        station_scope=station_scope,
+        selected_start=time_controls.selected_start,
+        selected_end=time_controls.selected_end,
     )
     render_station_product_rankings(agg_uuid, agg_prod)
     render_product_treemap(agg_prod)
