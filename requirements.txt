@@ -1,5 +1,5 @@
-pandas
-streamlit
-altair
-plotly
-requests
+streamlit==1.50.0
+altair==5.5.0
+pandas==2.3.3
+plotly==6.3.1
+requests==2.32.5
