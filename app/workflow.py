@@ -20,7 +20,7 @@ from app.preparation import (
 def load_prepared_intervals(
     db_path: str,
     time_controls: TimeControls,
-) -> tuple[pd.DataFrame, dict[Any, Any], dict[Any, Any]]:
+) -> tuple[pd.DataFrame, dict[Any, Any], dict[Any, Any], pd.DataFrame]:
     with st.spinner("Loading station_changes from SQLite…"):
         raw_df = load_station_changes(db_path)
 
@@ -44,4 +44,4 @@ def load_prepared_intervals(
         uuid_to_city=uuid_to_city,
         pid_to_title=pid_to_title,
     )
-    return intervals_with_duration, uuid_to_name, pid_to_title
+    return intervals_with_duration, uuid_to_name, pid_to_title, server_info_df

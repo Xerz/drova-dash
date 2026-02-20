@@ -16,6 +16,11 @@ class TimeControls:
 
 @dataclass(frozen=True)
 class SidebarFilters:
+    enable_uuid: bool
+    enable_prod: bool
+    enable_city: bool
+    enable_processor: bool
+    enable_graphic: bool
     selected_uuids: list[Any]
     selected_products: list[Any]
     selected_cities: list[Any]
@@ -258,6 +263,11 @@ def render_sidebar_filters(
     selected_graphics = ss.graphic_sel if ss.enable_graphic else all_graphics
 
     return SidebarFilters(
+        enable_uuid=ss.enable_uuid,
+        enable_prod=ss.enable_prod,
+        enable_city=ss.enable_city,
+        enable_processor=ss.enable_processor,
+        enable_graphic=ss.enable_graphic,
         selected_uuids=selected_uuids,
         selected_products=selected_products,
         selected_cities=selected_cities,
@@ -274,14 +284,18 @@ def apply_sidebar_filters(
     intervals_with_duration: pd.DataFrame,
     filters: SidebarFilters,
 ) -> pd.DataFrame:
-    filtered = intervals_with_duration[
-        intervals_with_duration["uuid"].isin(filters.selected_uuids)
-        & intervals_with_duration["product_id"].isin(filters.selected_products)
-        & intervals_with_duration["city_name"].isin(filters.selected_cities)
-        & intervals_with_duration["processor"].isin(filters.selected_processors)
-        & intervals_with_duration["graphic_names"].isin(filters.selected_graphics)
-        & intervals_with_duration["duration_sec"].notna()
-    ].copy()
+    mask = intervals_with_duration["duration_sec"].notna()
+    if filters.enable_uuid:
+        mask &= intervals_with_duration["uuid"].isin(filters.selected_uuids)
+    if filters.enable_prod:
+        mask &= intervals_with_duration["product_id"].isin(filters.selected_products)
+    if filters.enable_city:
+        mask &= intervals_with_duration["city_name"].isin(filters.selected_cities)
+    if filters.enable_processor:
+        mask &= intervals_with_duration["processor"].isin(filters.selected_processors)
+    if filters.enable_graphic:
+        mask &= intervals_with_duration["graphic_names"].isin(filters.selected_graphics)
+    filtered = intervals_with_duration[mask].copy()
 
     if filters.free_trial_only:
         filtered = filtered[filtered["free_trial"] == 1]
@@ -304,3 +318,51 @@ def apply_sidebar_filters(
         ]
 
     return filtered
+
+
+def apply_station_scope_filters(
+    server_info_df: pd.DataFrame,
+    filters: SidebarFilters,
+) -> pd.DataFrame:
+    if server_info_df.empty:
+        return server_info_df.copy()
+
+    scope = server_info_df.copy()
+    scope["city_name"] = scope["city_name"].fillna("Unknown")
+    scope["processor"] = scope["processor"].fillna("Unknown")
+    scope["graphic_names"] = scope["graphic_names"].fillna("Unknown")
+    scope["free_trial"] = pd.to_numeric(scope["free_trial"], errors="coerce").fillna(0)
+
+    if filters.enable_uuid:
+        scope = scope[scope["uuid"].isin(filters.selected_uuids)]
+    if filters.enable_city:
+        scope = scope[scope["city_name"].isin(filters.selected_cities)]
+    if filters.enable_processor:
+        scope = scope[scope["processor"].isin(filters.selected_processors)]
+    if filters.enable_graphic:
+        scope = scope[scope["graphic_names"].isin(filters.selected_graphics)]
+
+    if filters.enable_prod and "product_id" in scope.columns:
+        scope = scope[scope["product_id"].isin(filters.selected_products)]
+
+    if filters.free_trial_only:
+        scope = scope[scope["free_trial"] == 1]
+
+    if filters.product_number_range:
+        scope = scope[
+            scope["product_number"].between(
+                filters.product_number_range[0], filters.product_number_range[1]
+            )
+        ]
+    if filters.ram_range:
+        scope = scope[
+            scope["ram_bytes"].between(filters.ram_range[0], filters.ram_range[1])
+        ]
+    if filters.graphic_ram_range:
+        scope = scope[
+            scope["graphic_ram_bytes"].between(
+                filters.graphic_ram_range[0], filters.graphic_ram_range[1]
+            )
+        ]
+
+    return scope.drop_duplicates("uuid").reset_index(drop=True)
