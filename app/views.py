@@ -85,6 +85,11 @@ def render_rolling_window_charts(
 
 def render_product_share_wow_mom(filtered: pd.DataFrame, agg_prod: pd.DataFrame) -> None:
     st.markdown("### Product share (BUSY hours) + WoW/MoM")
+    st.caption(
+        "Доля каждого продукта в суммарных BUSY-часах за выбранный период. "
+        "WoW/MoM показывают изменение доли в процентных пунктах относительно "
+        "предыдущих 7/30 дней."
+    )
     share_df = build_product_share_wow_mom(filtered, top_n=20)
     if share_df.empty:
         st.info("Недостаточно данных для долей продуктов.")
@@ -129,6 +134,10 @@ def render_product_share_wow_mom(filtered: pd.DataFrame, agg_prod: pd.DataFrame)
 
 def render_product_adoption(filtered: pd.DataFrame, agg_prod: pd.DataFrame) -> None:
     st.markdown("### Product adoption (new stations in 7/30d)")
+    st.caption(
+        "Сколько станций впервые запустили продукт за последние 7 и 30 дней, "
+        "и какую долю от активной базы станций это составляет."
+    )
     adoption_df = build_product_adoption(filtered, top_n=20)
     if adoption_df.empty:
         st.info("Недостаточно данных для adoption-метрик.")
@@ -177,6 +186,10 @@ def render_product_adoption(filtered: pd.DataFrame, agg_prod: pd.DataFrame) -> N
 
 def render_free_trial_impact(filtered: pd.DataFrame) -> None:
     st.markdown("### Free-trial impact")
+    st.caption(
+        "Вклад free-trial станций в общее потребление: доля BUSY-часов, абсолютные часы "
+        "и изменение доли за последние 7 дней к предыдущим 7 дням."
+    )
     summary, daily = build_free_trial_impact(filtered)
     if daily.empty:
         st.info("Недостаточно данных для free-trial метрик.")
@@ -207,6 +220,9 @@ def render_free_trial_impact(filtered: pd.DataFrame) -> None:
 
 def render_demand_heatmap(filtered: pd.DataFrame) -> None:
     st.markdown("### Demand heatmap (weekday x hour)")
+    st.caption(
+        "Когда наблюдается наибольший спрос: распределение BUSY-часов по дню недели и часу старта сессии."
+    )
     heat = build_demand_heatmap(filtered)
     if heat.empty:
         st.info("Недостаточно данных для heatmap.")
@@ -233,6 +249,10 @@ def render_demand_heatmap(filtered: pd.DataFrame) -> None:
 
 def render_product_cannibalization(filtered: pd.DataFrame, agg_prod: pd.DataFrame) -> None:
     st.markdown("### Product churn/cannibalization (7d vs previous 7d)")
+    st.caption(
+        "Какие продукты теряют/набирают долю за последние 7 дней относительно предыдущих 7 дней. "
+        "Пары ниже — эвристическая подсказка потенциальной каннибализации."
+    )
     shift, pairs = build_product_cannibalization(filtered, lookback_days=7, top_n=20)
     if shift.empty:
         st.info("Недостаточно данных для churn/cannibalization метрик.")
@@ -317,6 +337,10 @@ def render_utilization_metrics(
     selected_end: pd.Timestamp | None,
 ) -> None:
     st.markdown("### Utilization rate (network and city)")
+    st.caption(
+        "Загрузка инфраструктуры: BUSY hours / (stations in scope × 24 × days). "
+        "Показывает, какая часть доступной ёмкости реально используется."
+    )
     summary, city_df = build_utilization_metrics(
         filtered,
         station_scope=station_scope,
@@ -357,6 +381,9 @@ def render_utilization_metrics(
 
 def render_idle_station_metrics(filtered: pd.DataFrame, station_scope: pd.DataFrame) -> None:
     st.markdown("### Idle station ratio")
+    st.caption(
+        "Доля станций без единой BUSY-сессии в выбранном периоде среди станций в текущем scope фильтров."
+    )
     summary, city_df, idle_df = build_idle_station_metrics(filtered, station_scope)
     if summary["stations_in_scope"] <= 0:
         st.info("Недостаточно данных для idle station ratio.")
@@ -396,6 +423,10 @@ def render_concentration_metrics(
     agg_prod: pd.DataFrame,
 ) -> None:
     st.markdown("### Risk concentration (top-10 share and HHI)")
+    st.caption(
+        "Концентрация риска: какая доля BUSY-часов сосредоточена у top-10 станций/продуктов и "
+        "насколько распределение монополизировано (HHI)."
+    )
     summary, station_df, product_df = build_concentration_metrics(filtered)
     if station_df.empty and product_df.empty:
         st.info("Недостаточно данных для concentration-метрик.")
@@ -450,6 +481,10 @@ def render_concentration_metrics(
 
 def render_volatility_metrics(filtered: pd.DataFrame, agg_uuid: pd.DataFrame) -> None:
     st.markdown("### Volatility index (daily BUSY-hours instability)")
+    st.caption(
+        "Стабильность спроса: сравниваем средние дневные часы и разброс (std/CV). "
+        "Чем выше CV, тем менее предсказуемо потребление."
+    )
     summary, city_stats, station_stats = build_volatility_metrics(filtered)
     if city_stats.empty and station_stats.empty:
         st.info("Недостаточно данных для volatility-метрик.")
@@ -513,6 +548,10 @@ def render_volatility_metrics(filtered: pd.DataFrame, agg_uuid: pd.DataFrame) ->
 
 def render_station_retention_metrics(filtered: pd.DataFrame) -> None:
     st.markdown("### Station retention")
+    st.caption(
+        "Удержание активных станций: какая доля станций из предыдущего окна осталась активной "
+        "в текущем окне (7 и 30 дней), плюс новые и ушедшие станции."
+    )
     retention_df = build_station_retention_metrics(filtered)
     if retention_df.empty:
         st.info("Недостаточно данных для retention-метрик.")
