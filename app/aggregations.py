@@ -831,19 +831,24 @@ def build_rolling_window_metrics(
     daily_station_sets = (
         base.groupby("date")["uuid"].agg(lambda s: set(s.dropna())).sort_index()
     )
+    last_complete_data_date = pd.Timestamp(base["date"].max()).normalize() - pd.Timedelta(days=1)
 
     if range_start is not None and range_end is not None:
         range_start_norm = pd.Timestamp(range_start).normalize()
         range_end_norm = pd.Timestamp(range_end).normalize()
-        data_end = pd.Timestamp(base["date"].max()).normalize()
-        full_end = range_end_norm
-        if range_end_norm > data_end:
-            full_end = data_end - pd.Timedelta(days=1)
+        full_end = (
+            range_end_norm
+            if range_end_norm <= last_complete_data_date
+            else last_complete_data_date
+        )
         if full_end < range_start_norm:
             return pd.DataFrame(columns=columns)
         full_dates = pd.date_range(range_start_norm, full_end, freq="D")
     else:
-        full_dates = pd.date_range(daily_hours.index.min(), daily_hours.index.max(), freq="D")
+        first_data_date = pd.Timestamp(daily_hours.index.min()).normalize()
+        if last_complete_data_date < first_data_date:
+            return pd.DataFrame(columns=columns)
+        full_dates = pd.date_range(first_data_date, last_complete_data_date, freq="D")
     daily_hours_full = daily_hours.reindex(full_dates, fill_value=0.0)
     rolling_hours = (
         daily_hours_full.rolling(window=window_days, min_periods=1).sum() / 3600.0
