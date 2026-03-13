@@ -443,20 +443,24 @@ def build_utilization_metrics(
 def build_idle_station_metrics(
     filtered: pd.DataFrame,
     station_scope: pd.DataFrame,
-) -> tuple[dict[str, float], pd.DataFrame, pd.DataFrame]:
+) -> tuple[dict[str, float], pd.DataFrame]:
     summary = {
         "stations_in_scope": 0.0,
         "active_stations": 0.0,
         "idle_stations": 0.0,
         "idle_ratio_pct": 0.0,
     }
-    city_columns = ["city", "stations_in_scope", "idle_stations", "idle_ratio_pct"]
     idle_columns = ["uuid", "name", "city_name", "processor", "graphic_names"]
 
     if station_scope.empty:
-        return summary, pd.DataFrame(columns=city_columns), pd.DataFrame(columns=idle_columns)
+        return summary, pd.DataFrame(columns=idle_columns)
 
     scope = station_scope.drop_duplicates("uuid").copy()
+    if "state" in scope.columns:
+        scope["state"] = scope["state"].fillna("Unknown").astype(str).str.upper()
+        scope = scope[scope["state"] != "OFFLINE"].copy()
+    if scope.empty:
+        return summary, pd.DataFrame(columns=idle_columns)
     scope["city_name"] = scope["city_name"].fillna("Unknown")
     active_uuids = set(filtered["uuid"].dropna().unique()) if not filtered.empty else set()
     scope["is_active"] = scope["uuid"].isin(active_uuids)
@@ -473,22 +477,12 @@ def build_idle_station_metrics(
         "idle_ratio_pct": idle_ratio,
     }
 
-    city_df = (
-        scope.assign(city=lambda d: d["city_name"])
-        .groupby("city", as_index=False)
-        .agg(
-            stations_in_scope=("uuid", "nunique"),
-            idle_stations=("is_idle", "sum"),
-        )
-        .assign(
-            idle_ratio_pct=lambda d: d["idle_stations"] / d["stations_in_scope"] * 100.0
-        )
-        .sort_values("idle_ratio_pct", ascending=False)
+    idle_df = (
+        scope[scope["is_idle"]][idle_columns]
+        .sort_values(["city_name", "name", "uuid"], na_position="last")
         .reset_index(drop=True)
     )
-
-    idle_df = scope[scope["is_idle"]][idle_columns].reset_index(drop=True)
-    return summary, city_df[city_columns], idle_df
+    return summary, idle_df
 
 
 def _concentration_for_key(filtered: pd.DataFrame, key: str) -> tuple[pd.DataFrame, float, float]:

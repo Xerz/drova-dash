@@ -6,6 +6,8 @@ import streamlit as st
 
 from app.config import CACHE_TTL_SECONDS, DB_PATH, PRODUCTS_URL
 
+BYTES_IN_GIB = 1024**3
+
 
 @st.cache_data(show_spinner=False, ttl=CACHE_TTL_SECONDS)
 def fetch_stations_dict(limit=1000, offset=0):
@@ -50,6 +52,7 @@ def fetch_server_info(db_path: str) -> pd.DataFrame:
                     uuid,
                     name,
                     city_name,
+                    state,
                     processor,
                     graphic_names,
                     free_trial,
@@ -62,6 +65,12 @@ def fetch_server_info(db_path: str) -> pd.DataFrame:
                 """,
                 conn,
             )
+        for bytes_col, gb_col in (
+            ("ram_bytes", "ram_gigabytes"),
+            ("graphic_ram_bytes", "graphic_ram_gigabytes"),
+        ):
+            numeric = pd.to_numeric(df[bytes_col], errors="coerce")
+            df[gb_col] = (numeric / BYTES_IN_GIB).round().astype("Int64")
         return df
     except Exception as e:
         st.warning(f"Не удалось загрузить server_info: {e}")

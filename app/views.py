@@ -411,13 +411,14 @@ def render_utilization_metrics(
 
 
 def render_idle_station_metrics(filtered: pd.DataFrame, station_scope: pd.DataFrame) -> None:
-    st.markdown("### Idle station ratio")
+    st.markdown("### Idle stations")
     st.caption(
-        "Доля станций без единой BUSY-сессии в выбранном периоде среди станций в текущем scope фильтров."
+        "Список станций без единой BUSY-сессии в выбранном периоде. "
+        "Станции со state OFFLINE исключаются."
     )
-    summary, city_df, idle_df = build_idle_station_metrics(filtered, station_scope)
+    summary, idle_df = build_idle_station_metrics(filtered, station_scope)
     if summary["stations_in_scope"] <= 0:
-        st.info("Недостаточно данных для idle station ratio.")
+        st.info("Недостаточно данных для idle stations.")
         return
 
     k1, k2, k3 = st.columns(3)
@@ -425,27 +426,11 @@ def render_idle_station_metrics(filtered: pd.DataFrame, station_scope: pd.DataFr
     k2.metric("Idle stations", f"{int(summary['idle_stations'])}")
     k3.metric("Stations in scope", f"{int(summary['stations_in_scope'])}")
 
-    if not city_df.empty:
-        top10 = city_df.head(10)
-        chart = (
-            alt.Chart(top10)
-            .mark_bar()
-            .encode(
-                x=alt.X("idle_ratio_pct:Q", title="Idle ratio, %"),
-                y=alt.Y("city:N", sort="-x", title="City"),
-                tooltip=[
-                    alt.Tooltip("city:N", title="City"),
-                    alt.Tooltip("stations_in_scope:Q", title="Stations"),
-                    alt.Tooltip("idle_stations:Q", title="Idle"),
-                    alt.Tooltip("idle_ratio_pct:Q", format=",.2f", title="Idle ratio, %"),
-                ],
-            )
-            .properties(height=320)
-        )
-        st.altair_chart(chart, width="stretch")
+    if idle_df.empty:
+        st.info("Idle stations not found in current scope.")
+        return
 
-    if not idle_df.empty:
-        st.dataframe(idle_df, width="stretch")
+    st.dataframe(idle_df, width="stretch")
 
 
 def render_concentration_metrics(

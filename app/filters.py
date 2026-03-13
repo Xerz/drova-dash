@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Callable
 
 import pandas as pd
 import streamlit as st
-
 
 @dataclass(frozen=True)
 class TimeControls:
@@ -28,8 +27,8 @@ class SidebarFilters:
     selected_graphics: list[Any]
     free_trial_only: bool
     product_number_range: tuple[int, int] | None
-    ram_range: tuple[int, int] | None
-    graphic_ram_range: tuple[int, int] | None
+    selected_ram_values: list[int] | None
+    selected_graphic_ram_values: list[int] | None
 
 
 def ensure_legacy_session_state() -> None:
@@ -225,6 +224,34 @@ def render_sidebar_filters(
 
     free_trial_only = st.sidebar.checkbox("Только Free trial станции")
 
+    def _discrete_checkbox_filter(
+        df: pd.DataFrame,
+        column: str,
+        label: str,
+        key_prefix: str,
+        transform: Callable[[pd.Series], pd.Series] | None = None,
+        value_label_suffix: str = "",
+    ) -> list[int] | None:
+        col_data = pd.to_numeric(df[column], errors="coerce").dropna()
+        if transform is not None:
+            col_data = transform(col_data).dropna()
+        if col_data.empty:
+            st.sidebar.info(f"Нет данных для {label}")
+            return None
+
+        values = sorted({int(value) for value in col_data.tolist()})
+        with st.sidebar.expander(label, expanded=False):
+            selected_values: list[int] = []
+            for value in values:
+                key = f"{key_prefix}_{value}"
+                if key not in ss:
+                    ss[key] = True
+                label_value = f"{value:,}{value_label_suffix}"
+                checked = st.checkbox(label_value, key=key)
+                if checked:
+                    selected_values.append(value)
+        return selected_values
+
     def _range_slider(
         df: pd.DataFrame,
         column: str,
@@ -250,15 +277,19 @@ def render_sidebar_filters(
         "product_number",
         "Количество продуктов (диапазон)",
     )
-    ram_range = _range_slider(
+    selected_ram_values = _discrete_checkbox_filter(
         intervals_with_duration,
-        "ram_bytes",
-        "RAM bytes (диапазон)",
+        "ram_gigabytes",
+        "RAM",
+        "ram_gb_value",
+        value_label_suffix=" GB",
     )
-    graphic_ram_range = _range_slider(
+    selected_graphic_ram_values = _discrete_checkbox_filter(
         intervals_with_duration,
-        "graphic_ram_bytes",
-        "Graphic RAM bytes (диапазон)",
+        "graphic_ram_gigabytes",
+        "Graphic RAM",
+        "graphic_ram_gb_value",
+        value_label_suffix=" GB",
     )
 
     selected_uuids = ss.uuid_sel if ss.enable_uuid else all_uuids
@@ -280,8 +311,8 @@ def render_sidebar_filters(
         selected_graphics=selected_graphics,
         free_trial_only=free_trial_only,
         product_number_range=product_number_range,
-        ram_range=ram_range,
-        graphic_ram_range=graphic_ram_range,
+        selected_ram_values=selected_ram_values,
+        selected_graphic_ram_values=selected_graphic_ram_values,
     )
 
 
@@ -311,15 +342,11 @@ def apply_sidebar_filters(
                 filters.product_number_range[0], filters.product_number_range[1]
             )
         ]
-    if filters.ram_range:
+    if filters.selected_ram_values is not None:
+        filtered = filtered[filtered["ram_gigabytes"].isin(filters.selected_ram_values)]
+    if filters.selected_graphic_ram_values is not None:
         filtered = filtered[
-            filtered["ram_bytes"].between(filters.ram_range[0], filters.ram_range[1])
-        ]
-    if filters.graphic_ram_range:
-        filtered = filtered[
-            filtered["graphic_ram_bytes"].between(
-                filters.graphic_ram_range[0], filters.graphic_ram_range[1]
-            )
+            filtered["graphic_ram_gigabytes"].isin(filters.selected_graphic_ram_values)
         ]
 
     return filtered
@@ -359,15 +386,11 @@ def apply_station_scope_filters(
                 filters.product_number_range[0], filters.product_number_range[1]
             )
         ]
-    if filters.ram_range:
+    if filters.selected_ram_values is not None:
+        scope = scope[scope["ram_gigabytes"].isin(filters.selected_ram_values)]
+    if filters.selected_graphic_ram_values is not None:
         scope = scope[
-            scope["ram_bytes"].between(filters.ram_range[0], filters.ram_range[1])
-        ]
-    if filters.graphic_ram_range:
-        scope = scope[
-            scope["graphic_ram_bytes"].between(
-                filters.graphic_ram_range[0], filters.graphic_ram_range[1]
-            )
+            scope["graphic_ram_gigabytes"].isin(filters.selected_graphic_ram_values)
         ]
 
     return scope.drop_duplicates("uuid").reset_index(drop=True)
