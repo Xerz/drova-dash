@@ -64,8 +64,13 @@ def render_time_controls() -> TimeControls:
         key="busy_date_range",
     )
 
-    if isinstance(selected_dates, (tuple, list)) and len(selected_dates) == 2:
-        start_date, end_date = selected_dates
+    if isinstance(selected_dates, (tuple, list)):
+        if len(selected_dates) >= 2:
+            start_date, end_date = selected_dates[:2]
+        elif len(selected_dates) == 1:
+            start_date = end_date = selected_dates[0]
+        else:
+            start_date, end_date = default_start.date(), default_end.date()
     else:
         start_date = end_date = selected_dates
 
