@@ -833,11 +833,15 @@ def build_rolling_window_metrics(
     )
 
     if range_start is not None and range_end is not None:
-        full_dates = pd.date_range(
-            pd.Timestamp(range_start).normalize(),
-            pd.Timestamp(range_end).normalize(),
-            freq="D",
-        )
+        range_start_norm = pd.Timestamp(range_start).normalize()
+        range_end_norm = pd.Timestamp(range_end).normalize()
+        data_end = pd.Timestamp(base["date"].max()).normalize()
+        full_end = range_end_norm
+        if range_end_norm > data_end:
+            full_end = data_end - pd.Timedelta(days=1)
+        if full_end < range_start_norm:
+            return pd.DataFrame(columns=columns)
+        full_dates = pd.date_range(range_start_norm, full_end, freq="D")
     else:
         full_dates = pd.date_range(daily_hours.index.min(), daily_hours.index.max(), freq="D")
     daily_hours_full = daily_hours.reindex(full_dates, fill_value=0.0)
