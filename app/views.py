@@ -80,7 +80,7 @@ def render_rolling_window_charts(
                 x=alt.X("date:T", title="Date"),
                 y=alt.Y("active_stations_window:Q", title="Stations"),
                 tooltip=[
-                    alt.Tooltip("date:T", title="Date"),
+                    alt.Tooltip("window_label:N", title="Window"),
                     alt.Tooltip(
                         "active_stations_window:Q",
                         title="Active stations",
@@ -101,7 +101,7 @@ def render_rolling_window_charts(
                 x=alt.X("date:T", title="Date"),
                 y=alt.Y("played_hours_window:Q", title="Hours"),
                 tooltip=[
-                    alt.Tooltip("date:T", title="Date"),
+                    alt.Tooltip("window_label:N", title="Window"),
                     alt.Tooltip(
                         "played_hours_window:Q",
                         title="Played hours",

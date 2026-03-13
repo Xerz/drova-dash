@@ -796,7 +796,14 @@ def build_rolling_window_metrics(
     range_start: pd.Timestamp | None = None,
     range_end: pd.Timestamp | None = None,
 ) -> pd.DataFrame:
-    columns = ["date", "active_stations_window", "played_hours_window"]
+    columns = [
+        "date",
+        "active_stations_window",
+        "played_hours_window",
+        "window_start",
+        "window_end",
+        "window_label",
+    ]
     if filtered.empty:
         return pd.DataFrame(columns=columns)
 
@@ -812,14 +819,7 @@ def build_rolling_window_metrics(
             start, end = end, start
         base = base[(base["date"] >= start) & (base["date"] <= end)].copy()
         if base.empty:
-            full_dates = pd.date_range(start, end, freq="D")
-            return pd.DataFrame(
-                {
-                    "date": full_dates,
-                    "active_stations_window": [0] * len(full_dates),
-                    "played_hours_window": [0.0] * len(full_dates),
-                }
-            )
+            return pd.DataFrame(columns=columns)
 
     daily_hours = base.groupby("date")["duration_sec"].sum().sort_index()
     daily_station_sets = (
@@ -875,6 +875,13 @@ def build_rolling_window_metrics(
             "active_stations_window": rolling_active_counts,
             "played_hours_window": rolling_hours.values,
         }
+    )
+    out["window_end"] = out["date"]
+    out["window_start"] = out["date"] - pd.Timedelta(days=max(window_days - 1, 0))
+    out["window_label"] = (
+        out["window_start"].dt.strftime("%d.%m.%Y")
+        + " - "
+        + out["window_end"].dt.strftime("%d.%m.%Y")
     )
     # Hide partial windows: require full window by selected range and by actual data span.
     window_offset = pd.Timedelta(days=max(window_days - 1, 0))
