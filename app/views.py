@@ -70,7 +70,7 @@ def render_rolling_window_charts(
         st.info("Недостаточно данных для скользящих метрик.")
         return
 
-    left, right = st.columns(2)
+    left, right, center = st.columns(3)
     with left:
         st.subheader("Активные станции в окне")
         active_chart = (
@@ -112,6 +112,40 @@ def render_rolling_window_charts(
             .properties(height=320)
         )
         st.altair_chart(hours_chart, width="stretch")
+
+    with center:
+        st.subheader("Часов на активную станцию")
+        hours_per_station_chart = (
+            alt.Chart(rolling_metrics)
+            .mark_line()
+            .encode(
+                x=alt.X("date:T", title="Date"),
+                y=alt.Y(
+                    "hours_per_active_station_window:Q",
+                    title="Hours / active station",
+                ),
+                tooltip=[
+                    alt.Tooltip("window_label:N", title="Window"),
+                    alt.Tooltip(
+                        "hours_per_active_station_window:Q",
+                        title="Hours / active station",
+                        format=",.2f",
+                    ),
+                    alt.Tooltip(
+                        "played_hours_window:Q",
+                        title="Played hours",
+                        format=",.2f",
+                    ),
+                    alt.Tooltip(
+                        "active_stations_window:Q",
+                        title="Active stations",
+                        format=",.0f",
+                    ),
+                ],
+            )
+            .properties(height=320)
+        )
+        st.altair_chart(hours_per_station_chart, width="stretch")
 
 
 def render_product_share_wow_mom(filtered: pd.DataFrame, agg_prod: pd.DataFrame) -> None:

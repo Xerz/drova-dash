@@ -800,6 +800,7 @@ def build_rolling_window_metrics(
         "date",
         "active_stations_window",
         "played_hours_window",
+        "hours_per_active_station_window",
         "window_start",
         "window_end",
         "window_label",
@@ -875,6 +876,14 @@ def build_rolling_window_metrics(
             "active_stations_window": rolling_active_counts,
             "played_hours_window": rolling_hours.values,
         }
+    )
+    out["hours_per_active_station_window"] = (
+        out["played_hours_window"] / out["active_stations_window"]
+    )
+    out["hours_per_active_station_window"] = (
+        out["hours_per_active_station_window"]
+        .replace([float("inf"), float("-inf")], 0.0)
+        .fillna(0.0)
     )
     out["window_end"] = out["date"]
     out["window_start"] = out["date"] - pd.Timedelta(days=max(window_days - 1, 0))
