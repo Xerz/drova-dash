@@ -1,0 +1,1314 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Месячная инфографика Drova</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111315;
+      --surface: #191d20;
+      --surface-2: #202529;
+      --surface-3: #252b30;
+      --line: #343b42;
+      --text: #eef2f3;
+      --muted: #9da8ad;
+      --muted-2: #758188;
+      --cyan: #4fc3c7;
+      --cyan-soft: rgba(79, 195, 199, 0.18);
+      --amber: #f2b84b;
+      --amber-soft: rgba(242, 184, 75, 0.18);
+      --green: #70c87f;
+      --green-soft: rgba(112, 200, 127, 0.18);
+      --rose: #e06f74;
+      --rose-soft: rgba(224, 111, 116, 0.18);
+      --violet: #a992ff;
+      --violet-soft: rgba(169, 146, 255, 0.16);
+      --radius: 8px;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        linear-gradient(180deg, rgba(79, 195, 199, 0.08), transparent 280px),
+        radial-gradient(circle at top right, rgba(242, 184, 75, 0.09), transparent 320px),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .page {
+      width: min(1480px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 28px 0 36px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--cyan);
+      font-size: 12px;
+      line-height: 1.35;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+      max-width: 740px;
+    }
+
+    .month-readout {
+      justify-self: end;
+      min-width: 260px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(25, 29, 32, 0.82);
+      box-shadow: var(--shadow);
+    }
+
+    .month-readout__label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    .month-readout__value {
+      margin-top: 6px;
+      font-size: 25px;
+      line-height: 1.15;
+      font-weight: 850;
+    }
+
+    .month-readout__period {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .month-tabs {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(52, 59, 66, 0.72);
+      background: rgba(17, 19, 21, 0.94);
+      backdrop-filter: blur(14px);
+    }
+
+    .month-tab,
+    .rank-tab {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+    }
+
+    .month-tab {
+      padding: 0 13px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .month-tab[aria-selected="true"],
+    .rank-tab[aria-selected="true"] {
+      color: var(--text);
+      border-color: rgba(79, 195, 199, 0.72);
+      background: linear-gradient(180deg, rgba(79, 195, 199, 0.2), rgba(79, 195, 199, 0.08));
+    }
+
+    .month-tab:hover,
+    .rank-tab:hover {
+      color: var(--text);
+      border-color: rgba(238, 242, 243, 0.38);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .kpi {
+      min-height: 118px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .kpi__label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .kpi__value {
+      margin-top: 10px;
+      font-size: 30px;
+      line-height: 1.05;
+      font-weight: 850;
+    }
+
+    .kpi__note {
+      margin-top: 9px;
+      color: var(--muted-2);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.35fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(25, 29, 32, 0.92);
+      overflow: hidden;
+    }
+
+    .panel__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 16px;
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid rgba(52, 59, 66, 0.72);
+    }
+
+    .panel__title {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .panel__meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+
+    .panel__body {
+      padding: 16px;
+    }
+
+    .ratio-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .ratio-block {
+      display: grid;
+      grid-template-columns: 128px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      min-height: 172px;
+      padding: 14px;
+      border: 1px solid rgba(52, 59, 66, 0.72);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+    }
+
+    .donut {
+      --hole: var(--surface-2);
+      width: 112px;
+      height: 112px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: conic-gradient(var(--cyan) 0 50%, var(--amber) 50% 100%);
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .donut::after {
+      content: "";
+      position: absolute;
+      inset: 22px;
+      border-radius: 50%;
+      background: var(--hole);
+      box-shadow: inset 0 0 0 1px rgba(238, 242, 243, 0.06);
+    }
+
+    .donut__value {
+      position: relative;
+      z-index: 1;
+      font-size: 22px;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .ratio-copy {
+      min-width: 0;
+    }
+
+    .ratio-copy__title {
+      font-weight: 820;
+      line-height: 1.3;
+    }
+
+    .ratio-copy__total {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .legend-row {
+      display: grid;
+      grid-template-columns: 14px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .legend-dot--desktop {
+      background: var(--cyan);
+    }
+
+    .legend-dot--sandbox {
+      background: var(--amber);
+    }
+
+    .legend-dot--with {
+      background: var(--green);
+    }
+
+    .legend-dot--without {
+      background: var(--rose);
+    }
+
+    .split-bar {
+      display: flex;
+      width: 100%;
+      height: 12px;
+      margin-top: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--surface-3);
+    }
+
+    .split-bar__segment {
+      min-width: 1px;
+    }
+
+    .split-bar__segment--desktop {
+      background: var(--cyan);
+    }
+
+    .split-bar__segment--sandbox {
+      background: var(--amber);
+    }
+
+    .rank-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .rank-tab {
+      padding: 0 11px;
+      font-size: 12px;
+      font-weight: 780;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 84px;
+      gap: 10px;
+      align-items: center;
+      min-height: 42px;
+    }
+
+    .bar-row__rank {
+      color: var(--muted-2);
+      font-size: 12px;
+      font-weight: 850;
+      text-align: right;
+    }
+
+    .bar-row__main {
+      min-width: 0;
+    }
+
+    .bar-row__label {
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 9px;
+      margin-top: 7px;
+      border-radius: 999px;
+      background: var(--surface-3);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+    }
+
+    .bar-row__value {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .hardware-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .hardware-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hardware-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 64px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .hardware-label {
+      min-width: 0;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.28;
+      overflow-wrap: anywhere;
+    }
+
+    .hardware-count {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .hardware-meter {
+      grid-column: 1 / -1;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--surface-3);
+      overflow: hidden;
+    }
+
+    .hardware-meter__fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--green), var(--amber));
+    }
+
+    .server-ratio-layout {
+      display: grid;
+      grid-template-columns: 142px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .server-donut {
+      --hole: var(--surface);
+      width: 138px;
+      height: 138px;
+      background: conic-gradient(var(--green) 0 65%, var(--rose) 65% 100%);
+    }
+
+    .server-stats {
+      display: grid;
+      gap: 10px;
+    }
+
+    .server-stat {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 11px 12px;
+      border: 1px solid rgba(52, 59, 66, 0.72);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+    }
+
+    .server-stat__name {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .server-stat__value {
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .warning-panel {
+      margin: 0 0 14px;
+      padding: 14px 16px;
+      border: 1px solid rgba(242, 184, 75, 0.42);
+      border-radius: var(--radius);
+      background: rgba(242, 184, 75, 0.08);
+    }
+
+    .warning-panel.is-hidden {
+      display: none;
+    }
+
+    .warning-panel__title {
+      color: var(--amber);
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 850;
+    }
+
+    .warning-list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.42;
+    }
+
+    .warning-list li + li {
+      margin-top: 4px;
+    }
+
+    .footnote {
+      margin: 16px 0 0;
+      color: var(--muted-2);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1180px) {
+      .dashboard-grid,
+      .ratio-grid,
+      .hardware-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .page {
+        width: min(100% - 24px, 1480px);
+        padding-top: 18px;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .month-readout {
+        justify-self: stretch;
+        min-width: 0;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .ratio-block,
+      .server-ratio-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .donut,
+      .server-donut {
+        justify-self: center;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel__head {
+        display: grid;
+      }
+
+      .panel__meta {
+        white-space: normal;
+      }
+
+      .bar-row {
+        grid-template-columns: 26px minmax(0, 1fr);
+      }
+
+      .bar-row__value {
+        grid-column: 2;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Mockup / фиктивные данные</p>
+        <h1>Месячная инфографика Drova</h1>
+        <p class="subtitle">Срез активности серверов по desktop/sandbox, станциям и железу. Структура экрана зафиксирована для последующей подстановки реальных данных.</p>
+      </div>
+      <aside class="month-readout" aria-live="polite">
+        <div class="month-readout__label">Выбранный месяц</div>
+        <div class="month-readout__value" id="monthTitle">-</div>
+        <div class="month-readout__period" id="monthPeriod">-</div>
+      </aside>
+    </header>
+
+    <nav class="month-tabs" id="monthTabs" aria-label="Месяцы отчета"></nav>
+
+    <section class="kpi-grid" aria-label="Ключевые показатели">
+      <article class="kpi">
+        <div class="kpi__label">BUSY-часы</div>
+        <div class="kpi__value" id="busyHours">-</div>
+        <div class="kpi__note" id="busyHoursNote">-</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi__label">Активные станции</div>
+        <div class="kpi__value" id="activeStations">-</div>
+        <div class="kpi__note">Уникальные станции с BUSY-сессиями</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi__label">Desktop по BUSY-часам</div>
+        <div class="kpi__value" id="desktopShare">-</div>
+        <div class="kpi__note">Доля desktop-тайтлов среди всех серверов</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi__label">Серверы с desktop</div>
+        <div class="kpi__value" id="desktopServers">-</div>
+        <div class="kpi__note" id="desktopServersNote">-</div>
+      </article>
+    </section>
+
+    <section class="warning-panel is-hidden" id="warningsPanel" aria-live="polite">
+      <div class="warning-panel__title">Примечания к данным</div>
+      <ul class="warning-list" id="warningsList"></ul>
+    </section>
+
+    <div class="dashboard-grid">
+      <div class="stack">
+        <section class="panel" aria-labelledby="ratioTitle">
+          <div class="panel__head">
+            <h2 class="panel__title" id="ratioTitle">Desktop / sandbox по BUSY-часам</h2>
+            <div class="panel__meta">2 среза</div>
+          </div>
+          <div class="panel__body">
+            <div class="ratio-grid">
+              <article class="ratio-block">
+                <div class="donut" id="allRatioDonut"><span class="donut__value" id="allRatioPct">-</span></div>
+                <div class="ratio-copy">
+                  <div class="ratio-copy__title">Все активные серверы</div>
+                  <div class="ratio-copy__total" id="allRatioTotal">-</div>
+                  <div class="split-bar" aria-hidden="true">
+                    <span class="split-bar__segment split-bar__segment--desktop" id="allDesktopSegment"></span>
+                    <span class="split-bar__segment split-bar__segment--sandbox" id="allSandboxSegment"></span>
+                  </div>
+                  <div class="legend" id="allRatioLegend"></div>
+                </div>
+              </article>
+
+              <article class="ratio-block">
+                <div class="donut" id="desktopOnlyRatioDonut"><span class="donut__value" id="desktopOnlyRatioPct">-</span></div>
+                <div class="ratio-copy">
+                  <div class="ratio-copy__title">Только серверы с desktop</div>
+                  <div class="ratio-copy__total" id="desktopOnlyRatioTotal">-</div>
+                  <div class="split-bar" aria-hidden="true">
+                    <span class="split-bar__segment split-bar__segment--desktop" id="desktopOnlyDesktopSegment"></span>
+                    <span class="split-bar__segment split-bar__segment--sandbox" id="desktopOnlySandboxSegment"></span>
+                  </div>
+                  <div class="legend" id="desktopOnlyRatioLegend"></div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="serverRatioTitle">
+          <div class="panel__head">
+            <h2 class="panel__title" id="serverRatioTitle">Активные серверы с desktop и без</h2>
+            <div class="panel__meta">по станциям месяца</div>
+          </div>
+          <div class="panel__body">
+            <div class="server-ratio-layout">
+              <div class="donut server-donut" id="serverDonut"><span class="donut__value" id="serverDonutPct">-</span></div>
+              <div class="server-stats">
+                <div class="server-stat">
+                  <span class="server-stat__name">С desktop</span>
+                  <span class="server-stat__value" id="serversWithDesktop">-</span>
+                </div>
+                <div class="server-stat">
+                  <span class="server-stat__name">Без desktop</span>
+                  <span class="server-stat__value" id="serversWithoutDesktop">-</span>
+                </div>
+                <div class="legend" id="serverLegend"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="hardwareTitle">
+          <div class="panel__head">
+            <h2 class="panel__title" id="hardwareTitle">Топ железа среди активных станций</h2>
+            <div class="panel__meta">по количеству станций</div>
+          </div>
+          <div class="panel__body">
+            <div class="hardware-grid">
+              <div>
+                <h3 class="panel__title">CPU</h3>
+                <div class="hardware-list" id="cpuList"></div>
+              </div>
+              <div>
+                <h3 class="panel__title">GPU</h3>
+                <div class="hardware-list" id="gpuList"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="stationsTitle">
+        <div class="panel__head">
+          <div>
+            <h2 class="panel__title" id="stationsTitle">Топ-10 станций</h2>
+            <p class="footnote">Рейтинг по BUSY-часам в выбранном месяце.</p>
+          </div>
+          <div class="rank-controls" id="rankTabs" aria-label="Срезы станций"></div>
+        </div>
+        <div class="panel__body">
+          <div class="bar-list" id="stationList"></div>
+        </div>
+      </section>
+    </div>
+
+    <p class="footnote">Все значения в этом файле фиктивные. Реальная фаза заменит только источник данных, сохранив структуру блоков и CSS-контракт.</p>
+  </main>
+
+  <script>
+    const MOCK_MONTHS = [
+      {
+        id: "2025-08",
+        label: "Август 2025",
+        period: "01.08.2025 - 31.08.2025",
+        kpis: { busyHours: 18420, sessions: 9260, activeStations: 148 },
+        titleRatio: {
+          all: { desktop: 4320, sandbox: 14100 },
+          desktopServers: { desktop: 4020, sandbox: 10980 }
+        },
+        serverRatio: { withDesktop: 98, withoutDesktop: 50 },
+        stationRanks: {
+          all: [
+            ["CYBERMOON PC#4 - online - 24/7", 426],
+            ["22 ARBAT & Uran Library", 389],
+            ["Wall-e RTX 4070 Super x24", 351],
+            ["16 ARBAT RTX 4070", 338],
+            ["12 ARBAT RTX 4070 super", 319],
+            ["20 ARBAT RTX 4070ti", 302],
+            ["17 ARBAT RTX 4070", 287],
+            ["23 ARBAT RTX 4070 super", 261],
+            ["Московская тестовая станция с очень длинным названием", 238],
+            ["izgame rtx5060", 219]
+          ],
+          withDesktop: [
+            ["CYBERMOON PC#4 - online - 24/7", 426],
+            ["Wall-e RTX 4070 Super x24", 351],
+            ["16 ARBAT RTX 4070", 338],
+            ["12 ARBAT RTX 4070 super", 319],
+            ["20 ARBAT RTX 4070ti", 302],
+            ["23 ARBAT RTX 4070 super", 261],
+            ["Cloud Station Desktop Pack North", 213],
+            ["Drova Creator Desktop Long Compatibility Node", 198],
+            ["HomeLab 4070 Desktop Shared", 176],
+            ["Arena desktop fallback server", 163]
+          ],
+          withoutDesktop: [
+            ["22 ARBAT & Uran Library", 389],
+            ["17 ARBAT RTX 4070", 287],
+            ["Московская тестовая станция с очень длинным названием", 238],
+            ["izgame rtx5060", 219],
+            ["Free Trial Queue 3060 Ti", 188],
+            ["Kazan Gaming RTX 4060", 174],
+            ["Tarkov Solo 3070", 168],
+            ["Remote Club 3080 Ti", 154],
+            ["Night Owl 4060 Ti", 147],
+            ["Compact server 3060", 132]
+          ]
+        },
+        cpu: [
+          ["AMD Ryzen 7 5700X 8-Core Processor", 24],
+          ["AMD Ryzen 5 5600 6-Core Processor", 18],
+          ["Intel 12th Gen Core i5-12400F", 15],
+          ["AMD Ryzen 5 7500F 6-Core Processor", 13],
+          ["Intel Core i5-10400F CPU @ 2.90GHz", 9]
+        ],
+        gpu: [
+          ["NVIDIA GeForce RTX 4070", 27],
+          ["NVIDIA GeForce RTX 3070", 20],
+          ["NVIDIA GeForce RTX 4060 Ti", 17],
+          ["NVIDIA GeForce RTX 4070 SUPER", 14],
+          ["NVIDIA GeForce RTX 3060 Ti", 13]
+        ]
+      },
+      {
+        id: "2025-09",
+        label: "Сентябрь 2025",
+        period: "01.09.2025 - 30.09.2025",
+        kpis: { busyHours: 20275, sessions: 10180, activeStations: 156 },
+        titleRatio: {
+          all: { desktop: 5160, sandbox: 15115 },
+          desktopServers: { desktop: 4890, sandbox: 11720 }
+        },
+        serverRatio: { withDesktop: 107, withoutDesktop: 49 },
+        stationRanks: {
+          all: [
+            ["CYBERMOON PC#4 - online - 24/7", 448],
+            ["16 ARBAT RTX 4070", 417],
+            ["22 ARBAT & Uran Library", 401],
+            ["20 ARBAT RTX 4070ti", 376],
+            ["Wall-e RTX 4070 Super x24", 369],
+            ["23 ARBAT RTX 4070 super", 344],
+            ["12 ARBAT RTX 4070 super", 318],
+            ["17 ARBAT RTX 4070", 294],
+            ["Long-form desktop benchmark station for screenshot QA", 271],
+            ["izgame rtx5060", 245]
+          ],
+          withDesktop: [
+            ["CYBERMOON PC#4 - online - 24/7", 448],
+            ["16 ARBAT RTX 4070", 417],
+            ["20 ARBAT RTX 4070ti", 376],
+            ["Wall-e RTX 4070 Super x24", 369],
+            ["23 ARBAT RTX 4070 super", 344],
+            ["12 ARBAT RTX 4070 super", 318],
+            ["Long-form desktop benchmark station for screenshot QA", 271],
+            ["Desktop QA Ryzen 7600 Lab", 228],
+            ["Cloud Workstation North 4070", 211],
+            ["Creator node 5080 preview", 189]
+          ],
+          withoutDesktop: [
+            ["22 ARBAT & Uran Library", 401],
+            ["17 ARBAT RTX 4070", 294],
+            ["izgame rtx5060", 245],
+            ["Tarkov Solo 3070", 218],
+            ["Free Trial Queue 3060 Ti", 194],
+            ["Kazan Gaming RTX 4060", 183],
+            ["Minsk Club 4070", 171],
+            ["Remote Club 3080 Ti", 166],
+            ["Night Owl 4060 Ti", 153],
+            ["Compact server 3060", 141]
+          ]
+        },
+        cpu: [
+          ["AMD Ryzen 7 5700X 8-Core Processor", 27],
+          ["AMD Ryzen 5 5600X 6-Core Processor", 19],
+          ["AMD Ryzen 5 5600 6-Core Processor", 18],
+          ["Intel 12th Gen Core i5-12400F", 16],
+          ["AMD Ryzen 7 3700X 8-Core Processor", 10]
+        ],
+        gpu: [
+          ["NVIDIA GeForce RTX 4070", 29],
+          ["NVIDIA GeForce RTX 3070", 21],
+          ["NVIDIA GeForce RTX 4060", 18],
+          ["NVIDIA GeForce RTX 4070 SUPER", 17],
+          ["NVIDIA GeForce RTX 5060 Ti", 14]
+        ]
+      },
+      {
+        id: "2025-10",
+        label: "Октябрь 2025",
+        period: "01.10.2025 - 31.10.2025",
+        kpis: { busyHours: 23110, sessions: 11640, activeStations: 169 },
+        titleRatio: {
+          all: { desktop: 7020, sandbox: 16090 },
+          desktopServers: { desktop: 6610, sandbox: 12480 }
+        },
+        serverRatio: { withDesktop: 121, withoutDesktop: 48 },
+        stationRanks: {
+          all: [
+            ["20 ARBAT RTX 4070ti", 492],
+            ["CYBERMOON PC#4 - online - 24/7", 481],
+            ["Wall-e RTX 4070 Super x24", 452],
+            ["16 ARBAT RTX 4070", 429],
+            ["12 ARBAT RTX 4070 super", 398],
+            ["22 ARBAT & Uran Library", 384],
+            ["23 ARBAT RTX 4070 super", 359],
+            ["17 ARBAT RTX 4070", 318],
+            ["Desktop intensive QA station with long public display name", 292],
+            ["izgame rtx5060", 267]
+          ],
+          withDesktop: [
+            ["20 ARBAT RTX 4070ti", 492],
+            ["CYBERMOON PC#4 - online - 24/7", 481],
+            ["Wall-e RTX 4070 Super x24", 452],
+            ["16 ARBAT RTX 4070", 429],
+            ["12 ARBAT RTX 4070 super", 398],
+            ["23 ARBAT RTX 4070 super", 359],
+            ["Desktop intensive QA station with long public display name", 292],
+            ["Cloud Workstation North 4070", 236],
+            ["Creator node 5080 preview", 224],
+            ["Desktop fallback East cluster", 204]
+          ],
+          withoutDesktop: [
+            ["22 ARBAT & Uran Library", 384],
+            ["17 ARBAT RTX 4070", 318],
+            ["izgame rtx5060", 267],
+            ["Kazan Gaming RTX 4060", 224],
+            ["Free Trial Queue 3060 Ti", 211],
+            ["Tarkov Solo 3070", 198],
+            ["Minsk Club 4070", 183],
+            ["Night Owl 4060 Ti", 166],
+            ["Remote Club 3080 Ti", 151],
+            ["Compact server 3060", 139]
+          ]
+        },
+        cpu: [
+          ["AMD Ryzen 7 5700X 8-Core Processor", 31],
+          ["AMD Ryzen 5 5600 6-Core Processor", 21],
+          ["AMD Ryzen 5 5600X 6-Core Processor", 19],
+          ["Intel 12th Gen Core i5-12400F", 18],
+          ["AMD Ryzen 5 7500F 6-Core Processor", 15]
+        ],
+        gpu: [
+          ["NVIDIA GeForce RTX 4070", 33],
+          ["NVIDIA GeForce RTX 3070", 22],
+          ["NVIDIA GeForce RTX 4060 Ti", 19],
+          ["NVIDIA GeForce RTX 4070 SUPER", 18],
+          ["NVIDIA GeForce RTX 5060", 17]
+        ]
+      },
+      {
+        id: "2025-11",
+        label: "Ноябрь 2025",
+        period: "01.11.2025 - 30.11.2025",
+        kpis: { busyHours: 24880, sessions: 12490, activeStations: 174 },
+        titleRatio: {
+          all: { desktop: 6120, sandbox: 18760 },
+          desktopServers: { desktop: 5840, sandbox: 13930 }
+        },
+        serverRatio: { withDesktop: 116, withoutDesktop: 58 },
+        stationRanks: {
+          all: [
+            ["CYBERMOON PC#4 - online - 24/7", 511],
+            ["22 ARBAT & Uran Library", 498],
+            ["20 ARBAT RTX 4070ti", 472],
+            ["Wall-e RTX 4070 Super x24", 455],
+            ["16 ARBAT RTX 4070", 441],
+            ["12 ARBAT RTX 4070 super", 413],
+            ["17 ARBAT RTX 4070", 367],
+            ["23 ARBAT RTX 4070 super", 344],
+            ["Long public station name for wrapping verification in a compact dashboard cell", 316],
+            ["izgame rtx5060", 287]
+          ],
+          withDesktop: [
+            ["CYBERMOON PC#4 - online - 24/7", 511],
+            ["20 ARBAT RTX 4070ti", 472],
+            ["Wall-e RTX 4070 Super x24", 455],
+            ["16 ARBAT RTX 4070", 441],
+            ["12 ARBAT RTX 4070 super", 413],
+            ["23 ARBAT RTX 4070 super", 344],
+            ["Long public station name for wrapping verification in a compact dashboard cell", 316],
+            ["Creator node 5080 preview", 242],
+            ["Desktop fallback East cluster", 218],
+            ["Cloud Workstation North 4070", 205]
+          ],
+          withoutDesktop: [
+            ["22 ARBAT & Uran Library", 498],
+            ["17 ARBAT RTX 4070", 367],
+            ["izgame rtx5060", 287],
+            ["Tarkov Solo 3070", 231],
+            ["Free Trial Queue 3060 Ti", 214],
+            ["Kazan Gaming RTX 4060", 201],
+            ["Minsk Club 4070", 184],
+            ["Remote Club 3080 Ti", 173],
+            ["Night Owl 4060 Ti", 162],
+            ["Compact server 3060", 146]
+          ]
+        },
+        cpu: [
+          ["AMD Ryzen 7 5700X 8-Core Processor", 34],
+          ["AMD Ryzen 5 5600 6-Core Processor", 23],
+          ["Intel 12th Gen Core i5-12400F", 19],
+          ["AMD Ryzen 5 5600X 6-Core Processor", 18],
+          ["Intel 13th Gen Core i5-13400F", 16]
+        ],
+        gpu: [
+          ["NVIDIA GeForce RTX 4070", 34],
+          ["NVIDIA GeForce RTX 5060", 22],
+          ["NVIDIA GeForce RTX 3070", 20],
+          ["NVIDIA GeForce RTX 4060 Ti", 19],
+          ["NVIDIA GeForce RTX 4070 Ti", 17]
+        ]
+      }
+    ];
+
+    const RANK_LABELS = {
+      all: "Среди всех",
+      withDesktop: "С desktop",
+      withoutDesktop: "Без desktop"
+    };
+
+    const state = {
+      monthIndex: Math.max(MOCK_MONTHS.length - 1, 0),
+      rankScope: "all"
+    };
+
+    const formatNumber = new Intl.NumberFormat("ru-RU");
+
+    function pct(part, total) {
+      return total > 0 ? Math.round((part / total) * 100) : 0;
+    }
+
+    function hours(value) {
+      return `${formatNumber.format(value)} ч`;
+    }
+
+    function stationWord(count) {
+      const mod10 = count % 10;
+      const mod100 = count % 100;
+      if (mod10 === 1 && mod100 !== 11) return "станция";
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "станции";
+      return "станций";
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function makeButton(label, selected, onClick, className) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = className;
+      button.setAttribute("aria-selected", selected ? "true" : "false");
+      button.textContent = label;
+      button.addEventListener("click", onClick);
+      return button;
+    }
+
+    function renderTabs() {
+      const tabs = document.getElementById("monthTabs");
+      tabs.replaceChildren();
+      MOCK_MONTHS.forEach((month, index) => {
+        tabs.appendChild(makeButton(month.label, index === state.monthIndex, () => {
+          state.monthIndex = index;
+          render();
+        }, "month-tab"));
+      });
+
+      const rankTabs = document.getElementById("rankTabs");
+      rankTabs.replaceChildren();
+      Object.entries(RANK_LABELS).forEach(([key, label]) => {
+        rankTabs.appendChild(makeButton(label, key === state.rankScope, () => {
+          state.rankScope = key;
+          renderStationRanking(MOCK_MONTHS[state.monthIndex]);
+          renderTabs();
+        }, "rank-tab"));
+      });
+    }
+
+    function setDonut(id, valuePct, firstColor, secondColor) {
+      const clamped = Math.max(0, Math.min(100, valuePct));
+      const donut = document.getElementById(id);
+      donut.style.background = `conic-gradient(${firstColor} 0 ${clamped}%, ${secondColor} ${clamped}% 100%)`;
+    }
+
+    function legendRow(dotClass, label, value, share) {
+      const row = document.createElement("div");
+      row.className = "legend-row";
+
+      const dot = document.createElement("span");
+      dot.className = `legend-dot ${dotClass}`;
+      row.appendChild(dot);
+
+      const labelNode = document.createElement("span");
+      labelNode.textContent = label;
+      row.appendChild(labelNode);
+
+      const valueNode = document.createElement("strong");
+      valueNode.textContent = `${hours(value)} / ${share}%`;
+      row.appendChild(valueNode);
+
+      return row;
+    }
+
+    function countLegendRow(dotClass, label, value, share) {
+      const row = document.createElement("div");
+      row.className = "legend-row";
+
+      const dot = document.createElement("span");
+      dot.className = `legend-dot ${dotClass}`;
+      row.appendChild(dot);
+
+      const labelNode = document.createElement("span");
+      labelNode.textContent = label;
+      row.appendChild(labelNode);
+
+      const valueNode = document.createElement("strong");
+      valueNode.textContent = `${value} ${stationWord(value)} / ${share}%`;
+      row.appendChild(valueNode);
+
+      return row;
+    }
+
+    function renderRatio(month, key, ids) {
+      const ratio = month.titleRatio[key];
+      const total = ratio.desktop + ratio.sandbox;
+      const desktopPct = pct(ratio.desktop, total);
+      const sandboxPct = 100 - desktopPct;
+
+      setDonut(ids.donut, desktopPct, "var(--cyan)", "var(--amber)");
+      setText(ids.pct, `${desktopPct}%`);
+      setText(ids.total, `${hours(total)} всего`);
+      document.getElementById(ids.desktopSegment).style.width = `${desktopPct}%`;
+      document.getElementById(ids.sandboxSegment).style.width = `${sandboxPct}%`;
+
+      const legend = document.getElementById(ids.legend);
+      legend.replaceChildren(
+        legendRow("legend-dot--desktop", "Desktop", ratio.desktop, desktopPct),
+        legendRow("legend-dot--sandbox", "Sandbox", ratio.sandbox, sandboxPct)
+      );
+    }
+
+    function renderStationRanking(month) {
+      const list = document.getElementById("stationList");
+      const rows = month.stationRanks[state.rankScope];
+      const max = Math.max(...rows.map(([, value]) => value));
+      list.replaceChildren();
+
+      rows.forEach(([label, value], index) => {
+        const row = document.createElement("article");
+        row.className = "bar-row";
+
+        const rank = document.createElement("div");
+        rank.className = "bar-row__rank";
+        rank.textContent = String(index + 1).padStart(2, "0");
+        row.appendChild(rank);
+
+        const main = document.createElement("div");
+        main.className = "bar-row__main";
+
+        const name = document.createElement("div");
+        name.className = "bar-row__label";
+        name.textContent = label;
+        main.appendChild(name);
+
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = `${Math.max(4, Math.round((value / max) * 100))}%`;
+        track.appendChild(fill);
+        main.appendChild(track);
+        row.appendChild(main);
+
+        const valueNode = document.createElement("div");
+        valueNode.className = "bar-row__value";
+        valueNode.textContent = hours(value);
+        row.appendChild(valueNode);
+
+        list.appendChild(row);
+      });
+    }
+
+    function renderHardwareList(id, rows) {
+      const list = document.getElementById(id);
+      const max = Math.max(...rows.map(([, count]) => count));
+      list.replaceChildren();
+
+      rows.forEach(([label, count]) => {
+        const item = document.createElement("article");
+        item.className = "hardware-item";
+
+        const labelNode = document.createElement("div");
+        labelNode.className = "hardware-label";
+        labelNode.textContent = label;
+        item.appendChild(labelNode);
+
+        const countNode = document.createElement("div");
+        countNode.className = "hardware-count";
+        countNode.textContent = `${count} ${stationWord(count)}`;
+        item.appendChild(countNode);
+
+        const meter = document.createElement("div");
+        meter.className = "hardware-meter";
+        const fill = document.createElement("div");
+        fill.className = "hardware-meter__fill";
+        fill.style.width = `${Math.max(5, Math.round((count / max) * 100))}%`;
+        meter.appendChild(fill);
+        item.appendChild(meter);
+
+        list.appendChild(item);
+      });
+    }
+
+    function renderServerRatio(month) {
+      const { withDesktop, withoutDesktop } = month.serverRatio;
+      const total = withDesktop + withoutDesktop;
+      const withPct = pct(withDesktop, total);
+      const withoutPct = 100 - withPct;
+
+      setDonut("serverDonut", withPct, "var(--green)", "var(--rose)");
+      setText("serverDonutPct", `${withPct}%`);
+      setText("serversWithDesktop", `${withDesktop} / ${withPct}%`);
+      setText("serversWithoutDesktop", `${withoutDesktop} / ${withoutPct}%`);
+
+      const legend = document.getElementById("serverLegend");
+      legend.replaceChildren(
+        countLegendRow("legend-dot--with", "С desktop", withDesktop, withPct),
+        countLegendRow("legend-dot--without", "Без desktop", withoutDesktop, withoutPct)
+      );
+    }
+
+    function renderWarnings(month) {
+      const panel = document.getElementById("warningsPanel");
+      const list = document.getElementById("warningsList");
+      const warnings = month.warnings || [];
+      list.replaceChildren();
+
+      if (warnings.length === 0) {
+        panel.classList.add("is-hidden");
+        return;
+      }
+
+      warnings.forEach((warning) => {
+        const item = document.createElement("li");
+        item.textContent = warning;
+        list.appendChild(item);
+      });
+      panel.classList.remove("is-hidden");
+    }
+
+    function renderKpis(month) {
+      const allRatio = month.titleRatio.all;
+      const allTotal = allRatio.desktop + allRatio.sandbox;
+      const desktopPct = pct(allRatio.desktop, allTotal);
+      const serverTotal = month.serverRatio.withDesktop + month.serverRatio.withoutDesktop;
+      const serverPct = pct(month.serverRatio.withDesktop, serverTotal);
+
+      setText("monthTitle", month.label);
+      setText("monthPeriod", month.period);
+      setText("busyHours", hours(month.kpis.busyHours));
+      setText("busyHoursNote", `${formatNumber.format(month.kpis.sessions)} BUSY-сессий`);
+      setText("activeStations", formatNumber.format(month.kpis.activeStations));
+      setText("desktopShare", `${desktopPct}%`);
+      setText("desktopServers", `${serverPct}%`);
+      setText("desktopServersNote", `${month.serverRatio.withDesktop} из ${serverTotal} активных`);
+    }
+
+    function render() {
+      const month = MOCK_MONTHS[state.monthIndex];
+      renderTabs();
+      renderKpis(month);
+      renderWarnings(month);
+      renderRatio(month, "all", {
+        donut: "allRatioDonut",
+        pct: "allRatioPct",
+        total: "allRatioTotal",
+        desktopSegment: "allDesktopSegment",
+        sandboxSegment: "allSandboxSegment",
+        legend: "allRatioLegend"
+      });
+      renderRatio(month, "desktopServers", {
+        donut: "desktopOnlyRatioDonut",
+        pct: "desktopOnlyRatioPct",
+        total: "desktopOnlyRatioTotal",
+        desktopSegment: "desktopOnlyDesktopSegment",
+        sandboxSegment: "desktopOnlySandboxSegment",
+        legend: "desktopOnlyRatioLegend"
+      });
+      renderServerRatio(month);
+      renderStationRanking(month);
+      renderHardwareList("cpuList", month.cpu);
+      renderHardwareList("gpuList", month.gpu);
+    }
+
+    render();
+  </script>
+</body>
+</html>
