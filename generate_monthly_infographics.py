@@ -462,7 +462,13 @@ def station_ranking(df: pd.DataFrame, station_names: dict[str, str], top_n: int 
     rows: list[list[Any]] = []
     for row in grouped.itertuples(index=False):
         uuid = str(row.uuid)
-        rows.append([station_names.get(uuid) or uuid, int(round(float(row.duration_sec) / 3600.0))])
+        rows.append(
+            [
+                station_names.get(uuid) or uuid,
+                int(round(float(row.duration_sec) / 3600.0)),
+                uuid,
+            ]
+        )
     return rows
 
 

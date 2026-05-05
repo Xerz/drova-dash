@@ -412,6 +412,17 @@
       overflow-wrap: anywhere;
     }
 
+    .bar-row__link {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .bar-row__link:hover {
+      color: var(--cyan);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
     .bar-track {
       width: 100%;
       height: 9px;
@@ -1161,7 +1172,7 @@
       const max = Math.max(...rows.map(([, value]) => value));
       list.replaceChildren();
 
-      rows.forEach(([label, value], index) => {
+      rows.forEach(([label, value, uuid], index) => {
         const row = document.createElement("article");
         row.className = "bar-row";
 
@@ -1175,7 +1186,17 @@
 
         const name = document.createElement("div");
         name.className = "bar-row__label";
-        name.textContent = label;
+        if (uuid) {
+          const link = document.createElement("a");
+          link.className = "bar-row__link";
+          link.href = `https://drova.io/stations/${encodeURIComponent(uuid)}`;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = label;
+          name.appendChild(link);
+        } else {
+          name.textContent = label;
+        }
         main.appendChild(name);
 
         const track = document.createElement("div");
