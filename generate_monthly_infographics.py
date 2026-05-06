@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import calendar
-import concurrent.futures
 import json
 import re
 import sqlite3
@@ -17,7 +16,6 @@ import requests
 
 
 PRODUCTS_URL = "https://services.drova.io/product-manager/product/listfull2"
-SERVER_PUBLIC_URL = "https://services.drova.io/server-manager/servers/public/"
 DEFAULT_TIMEOUT_SECONDS = 20
 
 RU_MONTHS = {
@@ -74,19 +72,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--cache-dir",
         default="reports/.cache",
-        help="Cache directory for product catalog and server product lists.",
+        help="Cache directory for product catalog API payloads.",
     )
     parser.add_argument(
         "--cache-ttl-hours",
         type=float,
         default=24.0,
         help="Cache TTL for API payloads. Stale cache is used if refresh fails.",
-    )
-    parser.add_argument(
-        "--fetch-workers",
-        type=int,
-        default=8,
-        help="Parallel workers for server product-list fetches.",
     )
     parser.add_argument(
         "--self-test",
@@ -362,37 +354,6 @@ def load_product_catalog(cache_dir: Path, ttl_hours: float) -> tuple[dict[str, d
     return catalog, warnings
 
 
-def fetch_server_payloads(
-    uuids: list[str],
-    cache_dir: Path,
-    ttl_hours: float,
-    workers: int,
-) -> tuple[dict[str, dict[str, Any] | None], list[str]]:
-    server_cache_dir = cache_dir / "servers_public"
-    warnings: list[str] = []
-
-    def fetch_one(uuid: str) -> tuple[str, dict[str, Any] | None, str | None]:
-        data, warning = get_json_with_cache(
-            f"{SERVER_PUBLIC_URL}{uuid}",
-            server_cache_dir / f"{uuid}.json",
-            ttl_hours,
-            required=False,
-        )
-        if isinstance(data, dict):
-            return uuid, data, warning
-        return uuid, None, warning
-
-    payloads: dict[str, dict[str, Any] | None] = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, workers)) as executor:
-        futures = [executor.submit(fetch_one, uuid) for uuid in uuids]
-        for future in concurrent.futures.as_completed(futures):
-            uuid, payload, warning = future.result()
-            payloads[uuid] = payload
-            if warning:
-                warnings.append(warning)
-    return payloads, warnings
-
-
 def product_desktop_map(catalog: dict[str, dict[str, Any]]) -> dict[str, bool | None]:
     out: dict[str, bool | None] = {}
     for product_id, meta in catalog.items():
@@ -401,35 +362,32 @@ def product_desktop_map(catalog: dict[str, dict[str, Any]]) -> dict[str, bool | 
     return out
 
 
-def classify_server_product_list(
-    product_list: Any,
-    product_is_desktop: dict[str, bool | None],
-) -> bool | None:
-    if not isinstance(product_list, list):
-        return None
-    has_unknown = False
-    for product_id in product_list:
-        product_class = product_is_desktop.get(str(product_id))
-        if product_class is True:
-            return True
-        if product_class is None:
-            has_unknown = True
-    if has_unknown:
-        return None
-    return False
-
-
-def classify_servers(
-    payloads: dict[str, dict[str, Any] | None],
+def classify_station_months(
+    month_df: pd.DataFrame,
     product_is_desktop: dict[str, bool | None],
 ) -> dict[str, bool | None]:
-    return {
-        uuid: classify_server_product_list(
-            payload.get("product_list") if isinstance(payload, dict) else None,
-            product_is_desktop,
-        )
-        for uuid, payload in payloads.items()
-    }
+    if month_df.empty:
+        return {}
+
+    base = month_df.loc[month_df["uuid"].notna(), ["uuid", "product_id"]].copy()
+    if base.empty:
+        return {}
+
+    base["uuid"] = base["uuid"].astype(str)
+    base["product_class"] = base["product_id"].astype(str).map(product_is_desktop)
+
+    classifications: dict[str, bool | None] = {}
+    for uuid, group in base.groupby("uuid", sort=False):
+        values = group["product_class"]
+        if (values == True).any():
+            classifications[uuid] = True
+        elif values.isna().any():
+            classifications[uuid] = None
+        elif (values == False).any():
+            classifications[uuid] = False
+        else:
+            classifications[uuid] = None
+    return classifications
 
 
 def ratio_for(df: pd.DataFrame, product_is_desktop: dict[str, bool | None]) -> tuple[dict[str, int], float]:
@@ -507,20 +465,20 @@ def build_month_payload(
     period: ReportPeriod,
     month_df: pd.DataFrame,
     product_is_desktop: dict[str, bool | None],
-    server_has_desktop: dict[str, bool | None],
     station_names: dict[str, str],
     server_processors: dict[str, str],
     server_graphics: dict[str, str],
 ) -> dict[str, Any]:
     month_df = month_df.copy()
-    month_df["has_desktop"] = month_df["uuid"].astype(str).map(server_has_desktop)
+    station_has_desktop = classify_station_months(month_df, product_is_desktop)
+    month_df["has_desktop"] = month_df["uuid"].astype(str).map(station_has_desktop)
 
     active_uuids = sorted(str(uuid) for uuid in month_df["uuid"].dropna().astype(str).unique())
     known_server_uuids = [
-        uuid for uuid in active_uuids if server_has_desktop.get(uuid) in (True, False)
+        uuid for uuid in active_uuids if station_has_desktop.get(uuid) in (True, False)
     ]
-    with_desktop = sum(1 for uuid in known_server_uuids if server_has_desktop.get(uuid) is True)
-    without_desktop = sum(1 for uuid in known_server_uuids if server_has_desktop.get(uuid) is False)
+    with_desktop = sum(1 for uuid in known_server_uuids if station_has_desktop.get(uuid) is True)
+    without_desktop = sum(1 for uuid in known_server_uuids if station_has_desktop.get(uuid) is False)
     unknown_server_count = len(active_uuids) - len(known_server_uuids)
 
     title_ratio_all, unknown_product_hours_all = ratio_for(month_df, product_is_desktop)
@@ -543,8 +501,8 @@ def build_month_payload(
         )
     if unknown_server_count:
         warnings.append(
-            f"{unknown_server_count} активных станций без доступного product_list "
-            "не включены в срезы с desktop / без desktop."
+            f"{unknown_server_count} активных станций не классифицированы как "
+            "с desktop / без desktop из-за product_id без useDefaultDesktop."
         )
 
     return {
@@ -584,7 +542,6 @@ def build_report_data(
     cache_dir: Path,
     cache_ttl_hours: float,
     max_session_hours: float,
-    fetch_workers: int,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     raw_changes = load_station_changes(db_path)
     raw_changes["changed_at"] = pd.to_datetime(raw_changes["changed_at"], errors="coerce")
@@ -614,23 +571,6 @@ def build_report_data(
     catalog, api_warnings = load_product_catalog(cache_dir, cache_ttl_hours)
     product_is_desktop = product_desktop_map(catalog)
 
-    if periods:
-        report_start = periods[0].start
-        report_end = periods[-1].end_exclusive
-        report_intervals = intervals[
-            (intervals["started_at"] < report_end) & (intervals["ended_at"] > report_start)
-        ]
-    else:
-        report_intervals = intervals
-    active_uuids = sorted(report_intervals["uuid"].dropna().astype(str).unique().tolist())
-    server_payloads, server_warnings = fetch_server_payloads(
-        active_uuids,
-        cache_dir,
-        cache_ttl_hours,
-        fetch_workers,
-    )
-    server_has_desktop = classify_servers(server_payloads, product_is_desktop)
-
     months: list[dict[str, Any]] = []
     for period in periods:
         month_df = clip_intervals_to_period(intervals, period)
@@ -639,14 +579,13 @@ def build_report_data(
                 period=period,
                 month_df=month_df,
                 product_is_desktop=product_is_desktop,
-                server_has_desktop=server_has_desktop,
                 station_names=station_names,
                 server_processors=server_processors,
                 server_graphics=server_graphics,
             )
         )
 
-    return months, api_warnings + server_warnings
+    return months, api_warnings
 
 
 def replace_report_data(template: str, months: list[dict[str, Any]]) -> str:
@@ -689,14 +628,12 @@ def generate(
     cache_dir: Path,
     cache_ttl_hours: float,
     max_session_hours: float,
-    fetch_workers: int,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     months, warnings = build_report_data(
         db_path=db_path,
         cache_dir=cache_dir,
         cache_ttl_hours=cache_ttl_hours,
         max_session_hours=max_session_hours,
-        fetch_workers=fetch_workers,
     )
     template = template_path.read_text(encoding="utf-8")
     html = replace_report_data(template, months)
@@ -746,9 +683,23 @@ def run_self_test() -> None:
     assert int(clipped["duration_sec"].sum()) == 3600
 
     product_classes = {"desktop": True, "sandbox": False}
-    assert classify_server_product_list(["sandbox", "desktop"], product_classes) is True
-    assert classify_server_product_list(["sandbox"], product_classes) is False
-    assert classify_server_product_list(["missing"], product_classes) is None
+    classification_sample = pd.DataFrame(
+        [
+            {"uuid": "with", "product_id": "sandbox"},
+            {"uuid": "with", "product_id": "desktop"},
+            {"uuid": "without", "product_id": "sandbox"},
+            {"uuid": "unknown", "product_id": "missing"},
+            {"uuid": "unknown_mix", "product_id": "sandbox"},
+            {"uuid": "unknown_mix", "product_id": "missing"},
+        ]
+    )
+    station_classes = classify_station_months(classification_sample, product_classes)
+    assert station_classes == {
+        "with": True,
+        "without": False,
+        "unknown": None,
+        "unknown_mix": None,
+    }
     print("self-test ok")
 
 
@@ -765,7 +716,6 @@ def main() -> None:
         cache_dir=Path(args.cache_dir),
         cache_ttl_hours=args.cache_ttl_hours,
         max_session_hours=args.max_session_hours,
-        fetch_workers=args.fetch_workers,
     )
     print(f"Generated {args.output}")
     print("Months:", ", ".join(month["id"] for month in months))
