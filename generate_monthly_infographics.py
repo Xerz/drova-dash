@@ -52,7 +52,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate a static monthly Drova infographic from SQLite data."
     )
-    parser.add_argument("--db", default="stations20260505.db", help="SQLite database path.")
+    parser.add_argument("--db", default="stations_merged.db", help="SQLite database path.")
     parser.add_argument(
         "--output",
         default="site/index.html",
