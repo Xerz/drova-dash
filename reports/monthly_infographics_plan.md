@@ -2,7 +2,7 @@
 
 ## Summary
 
-- HTML-макет подключен к реальным данным из `stations20260505.db`.
+- HTML-макет подключен к реальным данным из `stations_merged.db`.
 - Генератор пишет локальный preview в `reports/monthly_infographics.html` и Pages artifact в `site/index.html`.
 - GitHub Actions workflow генерирует `site/index.html` на push в `master` и публикует его через GitHub Pages.
 - Текущая БД содержит события до `2026-04-22 07:26:40`; майских данных нет.
@@ -11,7 +11,7 @@
 
 - CLI: `generate_monthly_infographics.py`.
 - Основные аргументы:
-  - `--db stations20260505.db`
+  - `--db stations_merged.db`
   - `--output site/index.html`
   - `--max-session-hours 30`
   - `--cache-dir reports/.cache`

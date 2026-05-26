@@ -35,7 +35,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: reports/.cache
-          key: monthly-infographics-${{ runner.os }}-${{ hashFiles('stations20260505.db') }}
+          key: monthly-infographics-${{ runner.os }}-${{ hashFiles('stations_merged.db') }}
           restore-keys: |
             monthly-infographics-${{ runner.os }}-
 
@@ -47,7 +47,7 @@ jobs:
       - name: Generate static site
         run: |
           python generate_monthly_infographics.py \
-            --db stations20260505.db \
+            --db stations_merged.db \
             --output site/index.html \
             --cache-dir reports/.cache \
             --max-session-hours 30
