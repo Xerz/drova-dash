@@ -38,7 +38,7 @@ time_controls = render_time_controls()
 # -----------------------------
 try:
     if not os.path.exists(DB_PATH):
-        st.error(f"Не найден файл БД: {DB_PATH}. Помести stations.db рядом с приложением.")
+        st.error(f"Не найден файл БД: {DB_PATH}. Помести stations_merged.db рядом с приложением.")
         st.stop()
     intervals_with_duration, uuid_to_name, pid_to_title, server_info_df = load_prepared_intervals(
         DB_PATH, time_controls
