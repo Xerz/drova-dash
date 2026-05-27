@@ -113,6 +113,13 @@ def month_last_day(value: pd.Timestamp) -> pd.Timestamp:
     )
 
 
+def parse_datetime_series(series: pd.Series) -> pd.Series:
+    try:
+        return pd.to_datetime(series, errors="coerce", format="mixed")
+    except TypeError:
+        return pd.to_datetime(series, errors="coerce")
+
+
 def iter_report_periods(data_min: pd.Timestamp, data_max: pd.Timestamp) -> list[ReportPeriod]:
     first_month = month_start(data_min)
     last_month = month_start(data_max)
@@ -177,8 +184,9 @@ def load_server_info(db_path: Path) -> pd.DataFrame:
 
 def clean_station_changes(df: pd.DataFrame) -> pd.DataFrame:
     cleaned = df.copy()
-    cleaned["changed_at"] = pd.to_datetime(cleaned["changed_at"], errors="coerce")
-    cleaned = cleaned.dropna(how="any").sort_values(["uuid", "changed_at", "id"])
+    cleaned["changed_at"] = parse_datetime_series(cleaned["changed_at"])
+    cleaned = cleaned.dropna(subset=["uuid", "changed_at", "new_state"])
+    cleaned = cleaned.sort_values(["uuid", "changed_at", "id"])
     return cleaned.reset_index(drop=True)
 
 
@@ -247,8 +255,8 @@ def prepare_intervals(intervals: pd.DataFrame, max_session_hours: float) -> pd.D
         return intervals.assign(raw_duration_sec=pd.Series(dtype="float64"))
 
     prepared = intervals.copy()
-    prepared["started_at"] = pd.to_datetime(prepared["started_at"], errors="coerce")
-    prepared["ended_at"] = pd.to_datetime(prepared["ended_at"], errors="coerce")
+    prepared["started_at"] = parse_datetime_series(prepared["started_at"])
+    prepared["ended_at"] = parse_datetime_series(prepared["ended_at"])
     prepared = prepared.dropna(subset=["started_at", "ended_at", "uuid", "product_id"])
     prepared["raw_duration_sec"] = (
         prepared["ended_at"] - prepared["started_at"]
@@ -544,7 +552,7 @@ def build_report_data(
     max_session_hours: float,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     raw_changes = load_station_changes(db_path)
-    raw_changes["changed_at"] = pd.to_datetime(raw_changes["changed_at"], errors="coerce")
+    raw_changes["changed_at"] = parse_datetime_series(raw_changes["changed_at"])
     data_min = pd.Timestamp(raw_changes["changed_at"].min())
     data_max = pd.Timestamp(raw_changes["changed_at"].max())
     periods = iter_report_periods(data_min, data_max)
@@ -681,6 +689,34 @@ def run_self_test() -> None:
     )
     clipped = clip_intervals_to_period(sample, april)
     assert int(clipped["duration_sec"].sum()) == 3600
+
+    sparse_product_changes = pd.DataFrame(
+        [
+            {
+                "id": 1,
+                "uuid": "u2",
+                "old_state": None,
+                "new_state": "BUSY",
+                "old_product_id": None,
+                "new_product_id": "desktop",
+                "changed_at": "2026-04-02 10:00:00",
+            },
+            {
+                "id": 2,
+                "uuid": "u2",
+                "old_state": "BUSY",
+                "new_state": "LISTEN",
+                "old_product_id": "desktop",
+                "new_product_id": None,
+                "changed_at": "2026-04-02 11:30:00",
+            },
+        ]
+    )
+    cleaned_sparse = clean_station_changes(sparse_product_changes)
+    assert len(cleaned_sparse) == 2
+    sparse_intervals = prepare_intervals(build_busy_intervals(cleaned_sparse), 30)
+    assert len(sparse_intervals) == 1
+    assert int(sparse_intervals.loc[0, "raw_duration_sec"]) == 5400
 
     product_classes = {"desktop": True, "sandbox": False}
     classification_sample = pd.DataFrame(
