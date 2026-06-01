@@ -416,11 +416,27 @@
     }
 
     .summary-chip {
+      display: block;
+      width: 100%;
+      min-height: 0;
       min-width: 0;
       padding: 10px;
       border: 1px solid rgba(52, 59, 66, 0.72);
       border-radius: var(--radius);
       background: rgba(25, 29, 32, 0.54);
+      text-align: left;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .summary-chip:hover {
+      border-color: rgba(79, 195, 199, 0.58);
+      background: rgba(79, 195, 199, 0.09);
+    }
+
+    .summary-chip[aria-pressed="true"] {
+      border-color: rgba(79, 195, 199, 0.78);
+      background: rgba(79, 195, 199, 0.15);
     }
 
     .summary-chip__label {
@@ -667,9 +683,6 @@
           <h2 class="panel__title" id="topPlayersTitle">Топ-10 игроков</h2>
           <div class="panel__meta">Доля считается от всего утилизированного времени месяца</div>
         </div>
-        <div class="toolbar">
-          <div class="segmented" id="billingTabs" aria-label="Тип оплаты"></div>
-        </div>
       </div>
       <div class="panel__body">
         <div class="month-grid">
@@ -747,8 +760,8 @@
       { key: "stationUtilization", label: "Утилизация постанционно" },
       { key: "shortSessions", label: "Короткие сессии" }
     ];
-    const BILLING_FILTERS = [
-      { key: "all", label: "любой тип оплаты" },
+    const TOP_BILLING_FILTERS = [
+      { key: "all", label: "Всего" },
       { key: "prepaid", label: "prepaid" },
       { key: "subscription", label: "subscription" }
     ];
@@ -772,7 +785,12 @@
       productCatalog: {},
       period: "currentMonth",
       metric: "absoluteUtilization",
-      topBillingType: "all",
+      topBillingByTable: {
+        playersLastMonth: "all",
+        playersCurrentMonth: "all",
+        gamesLastMonth: "all",
+        gamesCurrentMonth: "all"
+      },
       showAllStations: false,
       loading: false
     };
@@ -794,7 +812,7 @@
     function bindElements() {
       [
         "tokenInput", "rememberToken", "timeZoneSelect", "loadButton", "clearButton",
-        "statusValue", "statusNote", "errorBox", "periodTabs", "metricTabs", "billingTabs", "chartTitle",
+        "statusValue", "statusNote", "errorBox", "periodTabs", "metricTabs", "chartTitle",
         "chartMeta", "stationOptions", "showAllStations", "chartHost", "legendHost",
         "tooltip", "playersLastMonthSummary", "playersLastMonthTable", "playersCurrentMonthSummary",
         "playersCurrentMonthTable", "gamesLastMonthSummary", "gamesLastMonthTable",
@@ -874,10 +892,6 @@
       });
       renderTabGroup(els.metricTabs, METRICS, state.metric, (key) => {
         state.metric = key;
-        renderAll();
-      });
-      renderTabGroup(els.billingTabs, BILLING_FILTERS, state.topBillingType, (key) => {
-        state.topBillingType = key;
         renderAll();
       });
     }
@@ -1365,75 +1379,99 @@
     function renderTops() {
       const lastMonth = getMonthBounds(-1);
       const currentMonth = getMonthBounds(0);
-      renderTopMonth(els.playersLastMonthSummary, els.playersLastMonthTable, lastMonth, "player");
-      renderTopMonth(els.playersCurrentMonthSummary, els.playersCurrentMonthTable, currentMonth, "player");
-      renderTopMonth(els.gamesLastMonthSummary, els.gamesLastMonthTable, lastMonth, "game");
-      renderTopMonth(els.gamesCurrentMonthSummary, els.gamesCurrentMonthTable, currentMonth, "game");
+      renderTopMonth("playersLastMonth", els.playersLastMonthSummary, els.playersLastMonthTable, lastMonth, "player");
+      renderTopMonth("playersCurrentMonth", els.playersCurrentMonthSummary, els.playersCurrentMonthTable, currentMonth, "player");
+      renderTopMonth("gamesLastMonth", els.gamesLastMonthSummary, els.gamesLastMonthTable, lastMonth, "game");
+      renderTopMonth("gamesCurrentMonth", els.gamesCurrentMonthSummary, els.gamesCurrentMonthTable, currentMonth, "game");
     }
 
-    function renderTopMonth(summaryRoot, tableRoot, period, groupType) {
+    function renderTopMonth(tableKey, summaryRoot, tableRoot, period, groupType) {
       if (!state.sessions.length) {
         summaryRoot.replaceChildren();
         tableRoot.innerHTML = `<div class="empty">Нет данных</div>`;
         return;
       }
 
+      const billingType = state.topBillingByTable[tableKey] || "all";
       const totals = topSummaryForPeriod(period);
-      renderMonthSummary(summaryRoot, totals);
-      renderTopTable(tableRoot, topRowsForPeriod(period, groupType), groupType === "player" ? "Игрок" : "Игра");
+      renderMonthSummary(summaryRoot, totals, billingType, (nextBillingType) => {
+        state.topBillingByTable[tableKey] = nextBillingType;
+        renderTopMonth(tableKey, summaryRoot, tableRoot, period, groupType);
+      });
+      renderTopTable(tableRoot, topRowsForPeriod(period, groupType, billingType), groupType === "player" ? "Игрок" : "Игра");
     }
 
     function topSummaryForPeriod(period) {
-      let selectedMs = 0;
+      let allMs = 0;
       let prepaidMs = 0;
       let subscriptionMs = 0;
       state.sessions.forEach((session) => {
         const ms = sessionPeriodMs(session, period);
         if (ms <= 0) return;
+        allMs += ms;
         if (session.billingType === "prepaid") prepaidMs += ms;
         if (session.billingType === "subscription") subscriptionMs += ms;
-        if (billingMatches(session)) selectedMs += ms;
       });
-      return { selectedMs, prepaidMs, subscriptionMs };
+      return { allMs, prepaidMs, subscriptionMs };
     }
 
-    function renderMonthSummary(root, totals) {
-      const prepaidHours = totals.prepaidMs / 3600000;
-      const subscriptionHours = totals.subscriptionMs / 3600000;
-      const selectedHours = totals.selectedMs / 3600000;
+    function renderMonthSummary(root, totals, activeBillingType, onSelect) {
+      root.replaceChildren();
+      const summary = document.createElement("div");
+      summary.className = "month-summary";
+
+      TOP_BILLING_FILTERS.forEach((filter) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "summary-chip";
+        button.setAttribute("aria-pressed", filter.key === activeBillingType ? "true" : "false");
+        button.addEventListener("click", () => onSelect(filter.key));
+
+        const label = document.createElement("div");
+        label.className = "summary-chip__label";
+        label.textContent = filter.label;
+
+        const value = document.createElement("div");
+        value.className = "summary-chip__value";
+        value.textContent = `${formatHours.format(billingMsFor(totals, filter.key) / 3600000)} ч`;
+
+        button.append(label, value);
+        summary.appendChild(button);
+      });
+
       const billingTotal = totals.prepaidMs + totals.subscriptionMs;
       const prepaidPct = billingTotal > 0 ? totals.prepaidMs / billingTotal * 100 : 0;
       const subscriptionPct = billingTotal > 0 ? totals.subscriptionMs / billingTotal * 100 : 0;
-      root.innerHTML = `
-        <div class="month-summary">
-          <div class="summary-chip">
-            <div class="summary-chip__label">Всего</div>
-            <div class="summary-chip__value">${formatHours.format(selectedHours)} ч</div>
-          </div>
-          <div class="summary-chip">
-            <div class="summary-chip__label">prepaid</div>
-            <div class="summary-chip__value">${formatHours.format(prepaidHours)} ч</div>
-          </div>
-          <div class="summary-chip">
-            <div class="summary-chip__label">subscription</div>
-            <div class="summary-chip__value">${formatHours.format(subscriptionHours)} ч</div>
-          </div>
-          <div class="ratio-row">
-            <div>prepaid ${formatPct.format(prepaidPct)}% / subscription ${formatPct.format(subscriptionPct)}%</div>
-            <div class="ratio-bar" aria-hidden="true">
-              <span class="ratio-bar__prepaid" style="width:${prepaidPct}%"></span>
-              <span class="ratio-bar__subscription" style="width:${subscriptionPct}%"></span>
-            </div>
-          </div>
-        </div>
-      `;
+
+      const ratio = document.createElement("div");
+      ratio.className = "ratio-row";
+
+      const ratioText = document.createElement("div");
+      ratioText.textContent = `prepaid ${formatPct.format(prepaidPct)}% / subscription ${formatPct.format(subscriptionPct)}%`;
+
+      const ratioBar = document.createElement("div");
+      ratioBar.className = "ratio-bar";
+      ratioBar.setAttribute("aria-hidden", "true");
+
+      const prepaidFill = document.createElement("span");
+      prepaidFill.className = "ratio-bar__prepaid";
+      prepaidFill.style.width = `${prepaidPct}%`;
+
+      const subscriptionFill = document.createElement("span");
+      subscriptionFill.className = "ratio-bar__subscription";
+      subscriptionFill.style.width = `${subscriptionPct}%`;
+
+      ratioBar.append(prepaidFill, subscriptionFill);
+      ratio.append(ratioText, ratioBar);
+      summary.appendChild(ratio);
+      root.appendChild(summary);
     }
 
-    function topRowsForPeriod(period, groupType) {
+    function topRowsForPeriod(period, groupType, billingType) {
       const totals = new Map();
       let allMs = 0;
       state.sessions.forEach((session) => {
-        if (!billingMatches(session)) return;
+        if (!billingMatches(session, billingType)) return;
         const ms = sessionPeriodMs(session, period);
         if (ms <= 0) return;
         const key = groupType === "player" ? session.clientId : session.productId;
@@ -1518,8 +1556,14 @@
       root.replaceChildren(table);
     }
 
-    function billingMatches(session) {
-      return state.topBillingType === "all" || session.billingType === state.topBillingType;
+    function billingMsFor(totals, billingType) {
+      if (billingType === "prepaid") return totals.prepaidMs;
+      if (billingType === "subscription") return totals.subscriptionMs;
+      return totals.allMs;
+    }
+
+    function billingMatches(session, billingType) {
+      return billingType === "all" || session.billingType === billingType;
     }
 
     function sessionPeriodMs(session, period) {
