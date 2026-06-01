@@ -1390,7 +1390,8 @@
 
       const billingType = state.topBillingByTable[tableKey] || "all";
       const totals = topSummaryForPeriod(period);
-      renderMonthSummary(summaryRoot, totals, billingType, (nextBillingType) => {
+      const playerSummary = groupType === "player" ? playerActivitySummaryForPeriod(period, billingType) : null;
+      renderMonthSummary(summaryRoot, totals, billingType, playerSummary, (nextBillingType) => {
         state.topBillingByTable[tableKey] = nextBillingType;
         renderTopMonth(tableKey, summaryRoot, tableRoot, period, groupType);
       });
@@ -1411,7 +1412,28 @@
       return { allMs, prepaidMs, subscriptionMs };
     }
 
-    function renderMonthSummary(root, totals, activeBillingType, onSelect) {
+    function playerActivitySummaryForPeriod(period, billingType) {
+      const totals = new Map();
+      state.sessions.forEach((session) => {
+        if (!billingMatches(session, billingType)) return;
+        const ms = sessionPeriodMs(session, period);
+        if (ms <= 0) return;
+        totals.set(session.clientId, (totals.get(session.clientId) || 0) + ms);
+      });
+
+      let overHour = 0;
+      let underHour = 0;
+      totals.forEach((ms) => {
+        if (ms > 3600000) {
+          overHour += 1;
+        } else {
+          underHour += 1;
+        }
+      });
+      return { total: totals.size, overHour, underHour };
+    }
+
+    function renderMonthSummary(root, totals, activeBillingType, playerSummary, onSelect) {
       root.replaceChildren();
       const summary = document.createElement("div");
       summary.className = "month-summary";
@@ -1460,6 +1482,38 @@
       ratioBar.append(prepaidFill, subscriptionFill);
       ratio.append(ratioText, ratioBar);
       summary.appendChild(ratio);
+
+      if (playerSummary) {
+        const totalPlayers = Math.max(playerSummary.total, 1);
+        const overPct = playerSummary.overHour / totalPlayers * 100;
+        const underPct = playerSummary.underHour / totalPlayers * 100;
+
+        const playerRatio = document.createElement("div");
+        playerRatio.className = "ratio-row";
+
+        const playerRatioText = document.createElement("div");
+        playerRatioText.textContent = `Уникальных игроков: ${formatNumber.format(playerSummary.total)}, из них наиграли больше часа: ${formatNumber.format(playerSummary.overHour)}`;
+
+        const playerRatioDetail = document.createElement("div");
+        playerRatioDetail.textContent = `Больше часа ${formatNumber.format(playerSummary.overHour)} / меньше часа ${formatNumber.format(playerSummary.underHour)}`;
+
+        const playerRatioBar = document.createElement("div");
+        playerRatioBar.className = "ratio-bar";
+        playerRatioBar.setAttribute("aria-hidden", "true");
+
+        const overFill = document.createElement("span");
+        overFill.className = "ratio-bar__prepaid";
+        overFill.style.width = `${overPct}%`;
+
+        const underFill = document.createElement("span");
+        underFill.className = "ratio-bar__subscription";
+        underFill.style.width = `${underPct}%`;
+
+        playerRatioBar.append(overFill, underFill);
+        playerRatio.append(playerRatioText, playerRatioDetail, playerRatioBar);
+        summary.appendChild(playerRatio);
+      }
+
       root.appendChild(summary);
     }
 
