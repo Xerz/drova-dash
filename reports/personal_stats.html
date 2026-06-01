@@ -255,59 +255,6 @@
       accent-color: var(--cyan);
     }
 
-    .progress-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .progress-item {
-      min-height: 98px;
-      padding: 14px;
-      border: 1px solid rgba(52, 59, 66, 0.72);
-      border-radius: var(--radius);
-      background: var(--surface-2);
-    }
-
-    .progress-item__label {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      text-transform: uppercase;
-      font-weight: 800;
-    }
-
-    .progress-item__value {
-      margin-top: 7px;
-      font-size: 23px;
-      line-height: 1.16;
-      font-weight: 850;
-    }
-
-    .progress-item__note {
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.35;
-    }
-
-    .progress-bar {
-      height: 8px;
-      margin-top: 10px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: var(--surface-3);
-    }
-
-    .progress-bar span {
-      display: block;
-      width: 0;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, var(--cyan), var(--green));
-      transition: width 160ms ease;
-    }
-
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -430,6 +377,118 @@
       gap: 12px;
     }
 
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .month-card {
+      min-width: 0;
+      border: 1px solid rgba(52, 59, 66, 0.78);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      overflow: hidden;
+    }
+
+    .month-card__head {
+      padding: 13px 14px;
+      border-bottom: 1px solid rgba(52, 59, 66, 0.78);
+      background: rgba(37, 43, 48, 0.62);
+    }
+
+    .month-card__title {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.25;
+      font-weight: 850;
+    }
+
+    .month-card__body {
+      padding: 12px 14px 14px;
+    }
+
+    .month-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .summary-chip {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(52, 59, 66, 0.72);
+      border-radius: var(--radius);
+      background: rgba(25, 29, 32, 0.54);
+    }
+
+    .summary-chip__label {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+      text-transform: uppercase;
+      font-weight: 850;
+    }
+
+    .summary-chip__value {
+      margin-top: 5px;
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ratio-row {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 7px;
+      padding: 10px;
+      border: 1px solid rgba(52, 59, 66, 0.72);
+      border-radius: var(--radius);
+      background: rgba(25, 29, 32, 0.54);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 750;
+    }
+
+    .ratio-bar,
+    .share-bar {
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-3);
+    }
+
+    .ratio-bar {
+      display: flex;
+      height: 9px;
+    }
+
+    .ratio-bar__prepaid {
+      background: var(--cyan);
+    }
+
+    .ratio-bar__subscription {
+      background: var(--amber);
+    }
+
+    .share-cell {
+      display: grid;
+      gap: 6px;
+    }
+
+    .share-bar {
+      height: 7px;
+    }
+
+    .share-bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -501,7 +560,7 @@
 
     @media (max-width: 1100px) {
       .control-grid,
-      .progress-grid,
+      .month-grid,
       .table-grid {
         grid-template-columns: 1fr 1fr;
       }
@@ -519,7 +578,8 @@
 
       .topbar,
       .control-grid,
-      .progress-grid,
+      .month-grid,
+      .month-summary,
       .table-grid {
         grid-template-columns: 1fr;
       }
@@ -573,33 +633,6 @@
       <div class="error-box" id="errorBox"></div>
     </section>
 
-    <section class="grid">
-      <div class="progress-grid">
-        <article class="progress-item">
-          <div class="progress-item__label">Загрузка</div>
-          <div class="progress-item__value" id="fetchProgressValue">0%</div>
-          <div class="progress-bar"><span id="fetchProgressBar"></span></div>
-          <div class="progress-item__note" id="fetchProgressText">Ожидание запуска</div>
-        </article>
-        <article class="progress-item">
-          <div class="progress-item__label">Обработка</div>
-          <div class="progress-item__value" id="processProgressValue">0%</div>
-          <div class="progress-bar"><span id="processProgressBar"></span></div>
-          <div class="progress-item__note" id="processProgressText">Ожидание данных</div>
-        </article>
-        <article class="progress-item">
-          <div class="progress-item__label">Станции</div>
-          <div class="progress-item__value" id="stationCount">-</div>
-          <div class="progress-item__note">Загружены по станциям</div>
-        </article>
-        <article class="progress-item">
-          <div class="progress-item__label">Сессии</div>
-          <div class="progress-item__value" id="sessionCount">-</div>
-          <div class="progress-item__note" id="sessionCountNote">Используются в графиках</div>
-        </article>
-      </div>
-    </section>
-
     <section class="panel" aria-labelledby="chartTitle">
       <div class="panel__head">
         <div>
@@ -634,17 +667,61 @@
           <h2 class="panel__title" id="topPlayersTitle">Топ-10 игроков</h2>
           <div class="panel__meta">Доля считается от всего утилизированного времени месяца</div>
         </div>
+        <div class="toolbar">
+          <div class="segmented" id="billingTabs" aria-label="Тип оплаты"></div>
+        </div>
       </div>
       <div class="panel__body">
-        <div class="table-grid">
-          <div>
-            <h3 class="panel__title">Прошлый месяц</h3>
-            <div id="lastMonthTable"></div>
-          </div>
-          <div>
-            <h3 class="panel__title">Текущий месяц</h3>
-            <div id="currentMonthTable"></div>
-          </div>
+        <div class="month-grid">
+          <article class="month-card">
+            <div class="month-card__head">
+              <h3 class="month-card__title">Прошлый месяц</h3>
+            </div>
+            <div class="month-card__body">
+              <div id="playersLastMonthSummary"></div>
+              <div id="playersLastMonthTable"></div>
+            </div>
+          </article>
+          <article class="month-card">
+            <div class="month-card__head">
+              <h3 class="month-card__title">Текущий месяц</h3>
+            </div>
+            <div class="month-card__body">
+              <div id="playersCurrentMonthSummary"></div>
+              <div id="playersCurrentMonthTable"></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="topGamesTitle">
+      <div class="panel__head">
+        <div>
+          <h2 class="panel__title" id="topGamesTitle">Топ-10 игр</h2>
+          <div class="panel__meta">Названия берутся из публичного каталога продуктов</div>
+        </div>
+      </div>
+      <div class="panel__body">
+        <div class="month-grid">
+          <article class="month-card">
+            <div class="month-card__head">
+              <h3 class="month-card__title">Прошлый месяц</h3>
+            </div>
+            <div class="month-card__body">
+              <div id="gamesLastMonthSummary"></div>
+              <div id="gamesLastMonthTable"></div>
+            </div>
+          </article>
+          <article class="month-card">
+            <div class="month-card__head">
+              <h3 class="month-card__title">Текущий месяц</h3>
+            </div>
+            <div class="month-card__body">
+              <div id="gamesCurrentMonthSummary"></div>
+              <div id="gamesCurrentMonthTable"></div>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -659,7 +736,6 @@
     };
     const SHORT_SESSION_MS = 5 * 60 * 1000;
     const FETCH_CONCURRENCY = 4;
-    const DEFAULT_STATION_LIMIT = 12;
 
     const PERIODS = [
       { key: "lastMonth", label: "Дневной: прошлый месяц" },
@@ -667,9 +743,14 @@
       { key: "sixMonthsWeekly", label: "Понедельный: 6 месяцев" }
     ];
     const METRICS = [
-      { key: "totalUtilization", label: "Утилизация суммарно" },
+      { key: "absoluteUtilization", label: "Утилизация абсолютная" },
       { key: "stationUtilization", label: "Утилизация постанционно" },
       { key: "shortSessions", label: "Короткие сессии" }
+    ];
+    const BILLING_FILTERS = [
+      { key: "all", label: "любой тип оплаты" },
+      { key: "prepaid", label: "prepaid" },
+      { key: "subscription", label: "subscription" }
     ];
     const COLORS = [
       "#4fc3c7", "#70c87f", "#f2b84b", "#e06f74", "#a992ff", "#6aa8ff",
@@ -688,8 +769,10 @@
       sessions: [],
       stationIds: [],
       serverNames: {},
+      productCatalog: {},
       period: "currentMonth",
-      metric: "totalUtilization",
+      metric: "absoluteUtilization",
+      topBillingType: "all",
       showAllStations: false,
       loading: false
     };
@@ -711,11 +794,11 @@
     function bindElements() {
       [
         "tokenInput", "rememberToken", "timeZoneSelect", "loadButton", "clearButton",
-        "statusValue", "statusNote", "errorBox", "fetchProgressValue", "fetchProgressBar",
-        "fetchProgressText", "processProgressValue", "processProgressBar", "processProgressText",
-        "stationCount", "sessionCount", "sessionCountNote", "periodTabs", "metricTabs", "chartTitle",
+        "statusValue", "statusNote", "errorBox", "periodTabs", "metricTabs", "billingTabs", "chartTitle",
         "chartMeta", "stationOptions", "showAllStations", "chartHost", "legendHost",
-        "tooltip", "lastMonthTable", "currentMonthTable"
+        "tooltip", "playersLastMonthSummary", "playersLastMonthTable", "playersCurrentMonthSummary",
+        "playersCurrentMonthTable", "gamesLastMonthSummary", "gamesLastMonthTable",
+        "gamesCurrentMonthSummary", "gamesCurrentMonthTable"
       ].forEach((id) => {
         els[id] = document.getElementById(id);
       });
@@ -793,6 +876,10 @@
         state.metric = key;
         renderAll();
       });
+      renderTabGroup(els.billingTabs, BILLING_FILTERS, state.topBillingType, (key) => {
+        state.topBillingType = key;
+        renderAll();
+      });
     }
 
     function renderTabGroup(root, items, activeKey, onClick) {
@@ -821,19 +908,15 @@
       saveTokenPreference();
       setLoading(true);
       showError("");
-      setFetchProgress(0, "Старт загрузки");
-      setProcessProgress(0, "Ожидание данных");
 
       try {
         setStatus("Загрузка", "Получаю список станций");
-        setFetchProgress(5, "Получаю список станций");
         const baseSessions = await fetchSessions(null);
         const candidateStationIds = uniqueStationIds(baseSessions);
-        setFetchProgress(15, `Найдено станций: ${candidateStationIds.length}`);
+        setStatus("Загрузка", `Найдено ${formatNumber.format(candidateStationIds.length)} станций`);
 
         const stationPayloads = await mapLimit(candidateStationIds, FETCH_CONCURRENCY, async (stationId, index) => {
-          const pct = 15 + Math.round(((index + 1) / Math.max(candidateStationIds.length, 1)) * 70);
-          setFetchProgress(pct, `Станция ${index + 1}/${candidateStationIds.length}`);
+          setStatus("Загрузка", `Станция ${formatNumber.format(index + 1)} из ${formatNumber.format(candidateStationIds.length)}`);
           const sessions = await fetchSessions(stationId);
           return { stationId, sessions };
         });
@@ -841,12 +924,16 @@
         const activePayloads = stationPayloads.filter((item) => item.sessions.length > 0);
         const activeStationIds = activePayloads.map((item) => item.stationId).sort();
         state.stationIds = activeStationIds;
-        setFetchProgress(88, `Загружено станций: ${activeStationIds.length}`);
+        setStatus("Загрузка", `Загружено ${formatNumber.format(activeStationIds.length)} станций`);
 
-        state.serverNames = await fetchStationNames(activeStationIds);
+        const [serverNames, productCatalog] = await Promise.all([
+          fetchStationNames(activeStationIds),
+          fetchProductCatalog()
+        ]);
+        state.serverNames = serverNames;
+        state.productCatalog = productCatalog;
         const merged = dedupeSessions(activePayloads.flatMap((item) => item.sessions));
         state.rawSessions = merged;
-        setFetchProgress(100, `Готово: ${merged.length} сессий`);
         await processAndRender();
       } catch (error) {
         showError(error.message || String(error));
@@ -904,6 +991,33 @@
       }
     }
 
+    async function fetchProductCatalog() {
+      try {
+        const response = await fetch(`${API_BASE}/product-manager/product/listfull2`, {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+        if (!response.ok) {
+          throw new Error(`API ${response.status}: /product-manager/product/listfull2`);
+        }
+        const json = await response.json();
+        const list = Array.isArray(json) ? json : (Array.isArray(json?.list) ? json.list : []);
+        const catalog = {};
+        list.forEach((item) => {
+          if (!item || typeof item !== "object") return;
+          const id = String(item.productId || item.id || item.uuid || "").trim();
+          if (!id) return;
+          catalog[id] = {
+            title: item.title || item.displayName || shortId(id)
+          };
+        });
+        return catalog;
+      } catch (error) {
+        console.warn("product catalog unavailable", error);
+        return {};
+      }
+    }
+
     function uniqueStationIds(sessions) {
       const ids = new Set();
       sessions.forEach((session) => {
@@ -942,22 +1056,22 @@
 
     async function processAndRender() {
       setStatus("Обработка", "Готовлю графики");
-      setProcessProgress(10, "Подготовка сессий");
       await nextFrame();
 
       state.sessions = preprocessSessions(state.rawSessions);
-      setProcessProgress(35, "Расчёт длительности");
       await nextFrame();
 
-      setProcessProgress(55, "Расчёт периодов");
+      setStatus("Обработка", "Расчёт периодов и топов");
       await nextFrame();
 
-      setProcessProgress(75, "Построение графиков");
+      setStatus("Обработка", "Построение графиков");
       await nextFrame();
 
       renderAll();
-      setProcessProgress(100, "Готово");
-      setStatus("Готово", `${state.sessions.length} сессий используются в графиках`);
+      setStatus(
+        "Готово",
+        `Обработано ${formatNumber.format(state.sessions.length)} сессий на ${formatNumber.format(state.stationIds.length)} станциях`
+      );
     }
 
     function preprocessSessions(rawSessions) {
@@ -970,6 +1084,7 @@
           source: session,
           stationId: getStationId(session),
           clientId: String(session?.client_id || "Unknown"),
+          productId: String(session?.product_id || "unknown").trim() || "unknown",
           billingType: String(session?.billing_type || "").toLowerCase().trim(),
           created,
           finished,
@@ -987,20 +1102,14 @@
 
     function renderAll() {
       renderTabs();
-      renderSummary();
       renderStationOptions();
       renderChart();
-      renderTopPlayers();
-    }
-
-    function renderSummary() {
-      els.stationCount.textContent = state.stationIds.length ? formatNumber.format(state.stationIds.length) : "-";
-      els.sessionCount.textContent = state.sessions.length ? formatNumber.format(state.sessions.length) : "-";
+      renderTops();
     }
 
     function renderStationOptions() {
-      const perStationMetric = state.metric === "stationUtilization" || state.metric === "shortSessions";
-      els.stationOptions.hidden = !perStationMetric || state.stationIds.length <= DEFAULT_STATION_LIMIT;
+      const toggleMetric = state.metric === "absoluteUtilization" || state.metric === "shortSessions";
+      els.stationOptions.hidden = !toggleMetric || !state.sessions.length;
     }
 
     function renderChart() {
@@ -1017,8 +1126,8 @@
       els.chartTitle.textContent = metricLabel;
       els.chartMeta.textContent = `${periodLabel}, ${state.timeZone}`;
 
-      if (state.metric === "totalUtilization") {
-        drawChart(buildTotalUtilizationSeries(buckets), "%");
+      if (state.metric === "absoluteUtilization") {
+        drawChart(buildAbsoluteUtilizationSeries(buckets), "ч");
       } else if (state.metric === "stationUtilization") {
         drawChart(buildStationUtilizationSeries(buckets), "%");
       } else {
@@ -1026,19 +1135,33 @@
       }
     }
 
-    function buildTotalUtilizationSeries(buckets) {
-      const points = buckets.map((bucket) => {
+    function buildAbsoluteUtilizationSeries(buckets) {
+      const totalPoints = buckets.map((bucket) => {
         const busyMs = sumOverlapMs(state.sessions, bucket);
-        const capacityMs = bucketDuration(bucket) * Math.max(state.stationIds.length, 1);
-        const value = capacityMs > 0 ? busyMs / capacityMs * 100 : 0;
-        return pointFor(bucket, value, `${formatPct.format(value)}%`, `${formatHours.format(busyMs / 3600000)} ч`);
+        const hours = busyMs / 3600000;
+        return pointFor(bucket, hours, `${formatHours.format(hours)} ч`, "");
       });
-      return [{ name: "Все станции", color: COLORS[0], points }];
+      const series = [{ name: "Все станции", color: COLORS[0], points: totalPoints }];
+      if (!state.showAllStations) return series;
+
+      rankStationIds(buckets, "utilization").forEach((stationId, index) => {
+        const sessions = state.sessions.filter((session) => session.stationId === stationId);
+        const points = buckets.map((bucket) => {
+          const busyMs = sumOverlapMs(sessions, bucket);
+          const hours = busyMs / 3600000;
+          return pointFor(bucket, hours, `${formatHours.format(hours)} ч`, "");
+        });
+        series.push({
+          name: stationLabel(stationId),
+          color: COLORS[(index + 1) % COLORS.length],
+          points
+        });
+      });
+      return series;
     }
 
     function buildStationUtilizationSeries(buckets) {
-      const shown = selectedStationIds(buckets, "utilization");
-      return shown.map((stationId, index) => {
+      return rankStationIds(buckets, "utilization").map((stationId, index) => {
         const sessions = state.sessions.filter((session) => session.stationId === stationId);
         const points = buckets.map((bucket) => {
           const busyMs = sumOverlapMs(sessions, bucket);
@@ -1060,8 +1183,9 @@
         return pointFor(bucket, count, `${formatNumber.format(count)} сессий`, "");
       });
       const series = [{ name: "Все станции", color: COLORS[3], points: totalPoints }];
-      const shown = selectedStationIds(buckets, "shortSessions");
-      shown.forEach((stationId, index) => {
+      if (!state.showAllStations) return series;
+
+      rankStationIds(buckets, "shortSessions").forEach((stationId, index) => {
         const stationSessions = shortSessions.filter((session) => session.stationId === stationId);
         const points = buckets.map((bucket) => {
           const count = stationSessions.filter((session) => session.created >= bucket.startMs && session.created < bucket.endMs).length;
@@ -1074,11 +1198,6 @@
         });
       });
       return series;
-    }
-
-    function selectedStationIds(buckets, metric) {
-      const ranked = rankStationIds(buckets, metric);
-      return state.showAllStations ? ranked : ranked.slice(0, DEFAULT_STATION_LIMIT);
     }
 
     function rankStationIds(buckets, metric) {
@@ -1138,7 +1257,7 @@
         const y = innerHeight - (innerHeight * i / 4);
         chart.appendChild(svgEl("line", { x1: 0, y1: y, x2: innerWidth, y2: y, class: "grid-line" }));
         const label = svgEl("text", { x: -10, y: y + 4, class: "axis-text", "text-anchor": "end" });
-        label.textContent = `${formatPct.format(maxY * i / 4)}${unitLabel === "%" ? "%" : ""}`;
+        label.textContent = formatAxisValue(maxY * i / 4, unitLabel);
         chart.appendChild(label);
       }
       chart.appendChild(svgEl("line", { x1: 0, y1: innerHeight, x2: innerWidth, y2: innerHeight, class: "axis-line" }));
@@ -1208,6 +1327,12 @@
       return height - (value / maxY * height);
     }
 
+    function formatAxisValue(value, unitLabel) {
+      if (unitLabel === "%") return `${formatPct.format(value)}%`;
+      if (unitLabel === "ч") return `${formatHours.format(value)} ч`;
+      return formatNumber.format(Math.round(value));
+    }
+
     function svgEl(name, attrs) {
       const el = document.createElementNS("http://www.w3.org/2000/svg", name);
       Object.entries(attrs || {}).forEach(([key, value]) => el.setAttribute(key, value));
@@ -1237,34 +1362,94 @@
       els.tooltip.classList.remove("is-visible");
     }
 
-    function renderTopPlayers() {
-      if (!state.sessions.length) {
-        els.lastMonthTable.innerHTML = `<div class="empty">Нет данных</div>`;
-        els.currentMonthTable.innerHTML = `<div class="empty">Нет данных</div>`;
-        return;
-      }
-      renderTopTable(els.lastMonthTable, topPlayersForPeriod(getMonthBounds(-1)));
-      renderTopTable(els.currentMonthTable, topPlayersForPeriod(getMonthBounds(0)));
+    function renderTops() {
+      const lastMonth = getMonthBounds(-1);
+      const currentMonth = getMonthBounds(0);
+      renderTopMonth(els.playersLastMonthSummary, els.playersLastMonthTable, lastMonth, "player");
+      renderTopMonth(els.playersCurrentMonthSummary, els.playersCurrentMonthTable, currentMonth, "player");
+      renderTopMonth(els.gamesLastMonthSummary, els.gamesLastMonthTable, lastMonth, "game");
+      renderTopMonth(els.gamesCurrentMonthSummary, els.gamesCurrentMonthTable, currentMonth, "game");
     }
 
-    function topPlayersForPeriod(period) {
+    function renderTopMonth(summaryRoot, tableRoot, period, groupType) {
+      if (!state.sessions.length) {
+        summaryRoot.replaceChildren();
+        tableRoot.innerHTML = `<div class="empty">Нет данных</div>`;
+        return;
+      }
+
+      const totals = topSummaryForPeriod(period);
+      renderMonthSummary(summaryRoot, totals);
+      renderTopTable(tableRoot, topRowsForPeriod(period, groupType), groupType === "player" ? "Игрок" : "Игра");
+    }
+
+    function topSummaryForPeriod(period) {
+      let selectedMs = 0;
+      let prepaidMs = 0;
+      let subscriptionMs = 0;
+      state.sessions.forEach((session) => {
+        const ms = sessionPeriodMs(session, period);
+        if (ms <= 0) return;
+        if (session.billingType === "prepaid") prepaidMs += ms;
+        if (session.billingType === "subscription") subscriptionMs += ms;
+        if (billingMatches(session)) selectedMs += ms;
+      });
+      return { selectedMs, prepaidMs, subscriptionMs };
+    }
+
+    function renderMonthSummary(root, totals) {
+      const prepaidHours = totals.prepaidMs / 3600000;
+      const subscriptionHours = totals.subscriptionMs / 3600000;
+      const selectedHours = totals.selectedMs / 3600000;
+      const billingTotal = totals.prepaidMs + totals.subscriptionMs;
+      const prepaidPct = billingTotal > 0 ? totals.prepaidMs / billingTotal * 100 : 0;
+      const subscriptionPct = billingTotal > 0 ? totals.subscriptionMs / billingTotal * 100 : 0;
+      root.innerHTML = `
+        <div class="month-summary">
+          <div class="summary-chip">
+            <div class="summary-chip__label">Всего</div>
+            <div class="summary-chip__value">${formatHours.format(selectedHours)} ч</div>
+          </div>
+          <div class="summary-chip">
+            <div class="summary-chip__label">prepaid</div>
+            <div class="summary-chip__value">${formatHours.format(prepaidHours)} ч</div>
+          </div>
+          <div class="summary-chip">
+            <div class="summary-chip__label">subscription</div>
+            <div class="summary-chip__value">${formatHours.format(subscriptionHours)} ч</div>
+          </div>
+          <div class="ratio-row">
+            <div>prepaid ${formatPct.format(prepaidPct)}% / subscription ${formatPct.format(subscriptionPct)}%</div>
+            <div class="ratio-bar" aria-hidden="true">
+              <span class="ratio-bar__prepaid" style="width:${prepaidPct}%"></span>
+              <span class="ratio-bar__subscription" style="width:${subscriptionPct}%"></span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function topRowsForPeriod(period, groupType) {
       const totals = new Map();
       let allMs = 0;
       state.sessions.forEach((session) => {
-        const ms = overlapMs(session.created, session.finished, period.startMs, period.endMs);
+        if (!billingMatches(session)) return;
+        const ms = sessionPeriodMs(session, period);
         if (ms <= 0) return;
-        totals.set(session.clientId, (totals.get(session.clientId) || 0) + ms);
+        const key = groupType === "player" ? session.clientId : session.productId;
+        totals.set(key, (totals.get(key) || 0) + ms);
         allMs += ms;
       });
+
       let cumulative = 0;
       return [...totals.entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
-        .map(([clientId, ms], index) => {
+        .map(([key, ms], index) => {
           cumulative += ms;
           return {
             rank: index + 1,
-            clientId,
+            label: groupType === "player" ? playerLabel(key) : productLabel(key),
             hours: ms / 3600000,
             share: allMs > 0 ? ms / allMs * 100 : 0,
             cumulative: allMs > 0 ? cumulative / allMs * 100 : 0
@@ -1272,7 +1457,7 @@
         });
     }
 
-    function renderTopTable(root, rows) {
+    function renderTopTable(root, rows, labelHeader) {
       if (!rows.length) {
         root.innerHTML = `<div class="empty">Нет данных за период</div>`;
         return;
@@ -1282,32 +1467,72 @@
         <thead>
           <tr>
             <th style="width:44px">#</th>
-            <th>Игрок</th>
+            <th>${labelHeader}</th>
             <th class="num">Часы</th>
             <th class="num">Доля</th>
-            <th class="num">Кум.</th>
+            <th class="num">Сумма долей</th>
           </tr>
         </thead>
       `;
       const tbody = document.createElement("tbody");
       rows.forEach((row) => {
         const tr = document.createElement("tr");
-        [
-          row.rank,
-          row.clientId,
-          formatHours.format(row.hours),
-          `${formatPct.format(row.share)}%`,
-          `${formatPct.format(row.cumulative)}%`
-        ].forEach((value, index) => {
-          const td = document.createElement("td");
-          td.textContent = String(value);
-          if (index === 0 || index >= 2) td.className = "num";
-          tr.appendChild(td);
-        });
+
+        const rank = document.createElement("td");
+        rank.className = "num";
+        rank.textContent = String(row.rank);
+        tr.appendChild(rank);
+
+        const label = document.createElement("td");
+        label.textContent = row.label;
+        tr.appendChild(label);
+
+        const hours = document.createElement("td");
+        hours.className = "num";
+        hours.textContent = formatHours.format(row.hours);
+        tr.appendChild(hours);
+
+        const share = document.createElement("td");
+        share.className = "num";
+        share.textContent = `${formatPct.format(row.share)}%`;
+        tr.appendChild(share);
+
+        const cumulative = document.createElement("td");
+        cumulative.className = "num";
+        const wrap = document.createElement("div");
+        wrap.className = "share-cell";
+        const value = document.createElement("span");
+        value.textContent = `${formatPct.format(row.cumulative)}%`;
+        const bar = document.createElement("div");
+        bar.className = "share-bar";
+        const fill = document.createElement("span");
+        fill.style.width = `${Math.max(0, Math.min(100, row.cumulative))}%`;
+        bar.appendChild(fill);
+        wrap.append(value, bar);
+        cumulative.appendChild(wrap);
+        tr.appendChild(cumulative);
+
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
       root.replaceChildren(table);
+    }
+
+    function billingMatches(session) {
+      return state.topBillingType === "all" || session.billingType === state.topBillingType;
+    }
+
+    function sessionPeriodMs(session, period) {
+      return overlapMs(session.created, session.finished, period.startMs, period.endMs);
+    }
+
+    function playerLabel(clientId) {
+      return shortId(clientId);
+    }
+
+    function productLabel(productId) {
+      const id = String(productId || "").trim();
+      return state.productCatalog[id]?.title || shortId(id);
     }
 
     function getBucketsForPeriod(key) {
@@ -1378,6 +1603,12 @@
 
     function stationLabel(stationId) {
       return state.serverNames[stationId] || stationId;
+    }
+
+    function shortId(value) {
+      const text = String(value || "").trim();
+      if (!text) return "unknown";
+      return text.length <= 6 ? text : text.slice(-6);
     }
 
     function getFormatter(timeZone, options) {
@@ -1502,21 +1733,6 @@
       return result;
     }
 
-    function setFetchProgress(percent, text) {
-      setProgress(els.fetchProgressValue, els.fetchProgressBar, els.fetchProgressText, percent, text);
-    }
-
-    function setProcessProgress(percent, text) {
-      setProgress(els.processProgressValue, els.processProgressBar, els.processProgressText, percent, text);
-    }
-
-    function setProgress(valueEl, barEl, textEl, percent, text) {
-      const clamped = Math.max(0, Math.min(100, Math.round(percent)));
-      valueEl.textContent = `${clamped}%`;
-      barEl.style.width = `${clamped}%`;
-      textEl.textContent = text;
-    }
-
     function setStatus(value, note) {
       els.statusValue.textContent = value;
       els.statusNote.textContent = note;
@@ -1538,14 +1754,13 @@
       state.sessions = [];
       state.stationIds = [];
       state.serverNames = {};
+      state.productCatalog = {};
       els.tokenInput.value = "";
       els.rememberToken.checked = false;
       localStorage.removeItem(STORAGE_KEYS.token);
       localStorage.setItem(STORAGE_KEYS.remember, "0");
       showError("");
       setStatus("Ожидание", "Данные ещё не загружены");
-      setFetchProgress(0, "Ожидание запуска");
-      setProcessProgress(0, "Ожидание данных");
       renderAll();
     }
 
