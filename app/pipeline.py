@@ -2,13 +2,19 @@ import pandas as pd
 import streamlit as st
 
 
+def parse_datetime_series(series: pd.Series) -> pd.Series:
+    try:
+        return pd.to_datetime(series, errors="coerce", format="mixed")
+    except TypeError:
+        return pd.to_datetime(series, errors="coerce")
+
+
 @st.cache_data(show_spinner=False)
 def clean_df(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     if "changed_at" in df.columns:
-        df["changed_at"] = pd.to_datetime(df["changed_at"], errors="coerce")
-    # Drop rows with any NA (per requirement #2)
-    df = df.dropna(how="any").reset_index(drop=True)
+        df["changed_at"] = parse_datetime_series(df["changed_at"])
+    df = df.dropna(subset=["uuid", "changed_at", "new_state"]).reset_index(drop=True)
     # Sort chronologically within each uuid, then by id for stability
     df = df.sort_values(["uuid", "changed_at", "id"]).reset_index(drop=True)
     return df
