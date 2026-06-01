@@ -89,6 +89,32 @@
       max-width: 740px;
     }
 
+    .top-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .top-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(79, 195, 199, 0.44);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: rgba(79, 195, 199, 0.1);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .top-link:hover {
+      border-color: rgba(79, 195, 199, 0.72);
+      background: rgba(79, 195, 199, 0.16);
+    }
+
     .month-readout {
       justify-self: end;
       min-width: 260px;
@@ -647,6 +673,9 @@
         <p class="eyebrow">Mockup / фиктивные данные</p>
         <h1>Месячная инфографика Drova</h1>
         <p class="subtitle">Срез активности серверов по desktop/sandbox, станциям и железу. Структура экрана зафиксирована для последующей подстановки реальных данных.</p>
+        <div class="top-links">
+          <a class="top-link" href="personal.html">Личная статистика</a>
+        </div>
       </div>
       <aside class="month-readout" aria-live="polite">
         <div class="month-readout__label">Выбранный месяц</div>

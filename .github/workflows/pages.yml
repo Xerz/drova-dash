@@ -51,6 +51,7 @@ jobs:
             --output site/index.html \
             --cache-dir reports/.cache \
             --max-session-hours 30
+          cp reports/personal_stats.html site/personal.html
           touch site/.nojekyll
 
       - name: Configure Pages

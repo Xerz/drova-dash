@@ -1,0 +1,1557 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Личная статистика Drova</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111315;
+      --surface: #191d20;
+      --surface-2: #202529;
+      --surface-3: #252b30;
+      --line: #343b42;
+      --text: #eef2f3;
+      --muted: #9da8ad;
+      --muted-2: #758188;
+      --cyan: #4fc3c7;
+      --amber: #f2b84b;
+      --green: #70c87f;
+      --rose: #e06f74;
+      --violet: #a992ff;
+      --radius: 8px;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        linear-gradient(180deg, rgba(79, 195, 199, 0.08), transparent 280px),
+        radial-gradient(circle at top right, rgba(242, 184, 75, 0.09), transparent 320px),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid rgba(79, 195, 199, 0.46);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: rgba(79, 195, 199, 0.13);
+      min-height: 38px;
+      padding: 0 14px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: rgba(79, 195, 199, 0.8);
+      background: rgba(79, 195, 199, 0.19);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: var(--surface-2);
+      padding: 0 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 750;
+    }
+
+    .page {
+      width: min(1480px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 28px 0 36px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--cyan);
+      font-size: 12px;
+      line-height: 1.35;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+      max-width: 840px;
+    }
+
+    .top-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .top-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(79, 195, 199, 0.44);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: rgba(79, 195, 199, 0.1);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .status-card {
+      justify-self: end;
+      min-width: 280px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(25, 29, 32, 0.82);
+      box-shadow: var(--shadow);
+    }
+
+    .status-card__label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .status-card__value {
+      margin-top: 6px;
+      font-size: 22px;
+      line-height: 1.18;
+      font-weight: 850;
+    }
+
+    .status-card__note {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel + .panel,
+    .grid + .panel,
+    .controls + .grid {
+      margin-top: 14px;
+    }
+
+    .panel__head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(32, 37, 41, 0.58);
+    }
+
+    .panel__title {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.25;
+      font-weight: 850;
+    }
+
+    .panel__meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .panel__body {
+      padding: 16px;
+    }
+
+    .controls {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: 0 0 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(52, 59, 66, 0.72);
+      background: rgba(17, 19, 21, 0.94);
+      backdrop-filter: blur(14px);
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: minmax(240px, 1.2fr) minmax(220px, 0.9fr) auto auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .check-row input {
+      width: 16px;
+      min-height: 16px;
+      accent-color: var(--cyan);
+    }
+
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .progress-item {
+      min-height: 98px;
+      padding: 14px;
+      border: 1px solid rgba(52, 59, 66, 0.72);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+    }
+
+    .progress-item__label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .progress-item__value {
+      margin-top: 7px;
+      font-size: 23px;
+      line-height: 1.16;
+      font-weight: 850;
+    }
+
+    .progress-item__note {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .progress-bar {
+      height: 8px;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-3);
+    }
+
+    .progress-bar span {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      transition: width 160ms ease;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .segmented {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .segmented button {
+      min-height: 36px;
+      border-color: var(--line);
+      color: var(--muted);
+      background: var(--surface-2);
+      font-size: 13px;
+    }
+
+    .segmented button[aria-pressed="true"] {
+      color: var(--text);
+      border-color: rgba(79, 195, 199, 0.72);
+      background: linear-gradient(180deg, rgba(79, 195, 199, 0.2), rgba(79, 195, 199, 0.08));
+    }
+
+    .chart-shell {
+      position: relative;
+      min-height: 390px;
+    }
+
+    .chart-host {
+      min-height: 360px;
+      overflow-x: auto;
+    }
+
+    .chart-host svg {
+      display: block;
+      min-width: 760px;
+      width: 100%;
+      height: 360px;
+    }
+
+    .axis-text {
+      fill: var(--muted);
+      font-size: 11px;
+    }
+
+    .grid-line {
+      stroke: rgba(117, 129, 136, 0.22);
+      stroke-width: 1;
+    }
+
+    .axis-line {
+      stroke: rgba(157, 168, 173, 0.44);
+      stroke-width: 1;
+    }
+
+    .series-line {
+      fill: none;
+      stroke-width: 2.4;
+    }
+
+    .series-point {
+      stroke: var(--surface);
+      stroke-width: 2;
+      cursor: crosshair;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px 12px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 280px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+    }
+
+    .tooltip {
+      position: fixed;
+      z-index: 50;
+      max-width: min(320px, calc(100vw - 28px));
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(17, 19, 21, 0.96);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      line-height: 1.4;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(10px, 10px);
+      transition: opacity 100ms ease;
+    }
+
+    .tooltip.is-visible {
+      opacity: 1;
+    }
+
+    .table-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(52, 59, 66, 0.68);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.25;
+      text-transform: uppercase;
+      font-weight: 850;
+    }
+
+    td {
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .empty {
+      display: grid;
+      min-height: 220px;
+      place-items: center;
+      border: 1px dashed rgba(117, 129, 136, 0.45);
+      border-radius: var(--radius);
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .error-box {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(224, 111, 116, 0.45);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: rgba(224, 111, 116, 0.1);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .error-box.is-visible {
+      display: block;
+    }
+
+    .station-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .control-grid,
+      .progress-grid,
+      .table-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .control-grid > * {
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100% - 24px, 1480px);
+        padding-top: 18px;
+      }
+
+      .topbar,
+      .control-grid,
+      .progress-grid,
+      .table-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .status-card {
+        justify-self: stretch;
+        min-width: 0;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Личная статистика</p>
+        <h1>Статистика мерчанта Drova</h1>
+        <p class="subtitle">Введите API токен для получения статистики. Данные загружаются в браузере, затем пересчитываются по выбранному часовому поясу.</p>
+        <div class="top-links">
+          <a class="top-link" href="index.html">Месячная инфографика</a>
+        </div>
+      </div>
+      <aside class="status-card" aria-live="polite">
+        <div class="status-card__label">Статус</div>
+        <div class="status-card__value" id="statusValue">Ожидание</div>
+        <div class="status-card__note" id="statusNote">Данные ещё не загружены</div>
+      </aside>
+    </header>
+
+    <section class="controls" aria-label="Параметры загрузки">
+      <div class="control-grid">
+        <label>
+          API токен
+          <input id="tokenInput" type="password" autocomplete="off" placeholder="Введите API токен для получения статистики">
+        </label>
+        <label>
+          Часовой пояс
+          <select id="timeZoneSelect"></select>
+        </label>
+        <label class="check-row">
+          <input id="rememberToken" type="checkbox">
+          Запомнить
+        </label>
+        <button id="loadButton" type="button">Загрузить</button>
+        <button id="clearButton" type="button">Очистить</button>
+      </div>
+      <div class="error-box" id="errorBox"></div>
+    </section>
+
+    <section class="grid">
+      <div class="progress-grid">
+        <article class="progress-item">
+          <div class="progress-item__label">Загрузка</div>
+          <div class="progress-item__value" id="fetchProgressValue">0%</div>
+          <div class="progress-bar"><span id="fetchProgressBar"></span></div>
+          <div class="progress-item__note" id="fetchProgressText">Ожидание запуска</div>
+        </article>
+        <article class="progress-item">
+          <div class="progress-item__label">Обработка</div>
+          <div class="progress-item__value" id="processProgressValue">0%</div>
+          <div class="progress-bar"><span id="processProgressBar"></span></div>
+          <div class="progress-item__note" id="processProgressText">Ожидание данных</div>
+        </article>
+        <article class="progress-item">
+          <div class="progress-item__label">Станции</div>
+          <div class="progress-item__value" id="stationCount">-</div>
+          <div class="progress-item__note">Загружены по станциям</div>
+        </article>
+        <article class="progress-item">
+          <div class="progress-item__label">Сессии</div>
+          <div class="progress-item__value" id="sessionCount">-</div>
+          <div class="progress-item__note" id="sessionCountNote">Используются в графиках</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="chartTitle">
+      <div class="panel__head">
+        <div>
+          <h2 class="panel__title" id="chartTitle">График</h2>
+          <div class="panel__meta" id="chartMeta">Загрузите данные для построения графиков</div>
+        </div>
+        <div class="toolbar">
+          <div class="segmented" id="periodTabs" aria-label="Период графика"></div>
+          <div class="segmented" id="metricTabs" aria-label="Метрика графика"></div>
+        </div>
+      </div>
+      <div class="panel__body">
+        <div class="station-options" id="stationOptions">
+          <label class="check-row">
+            <input id="showAllStations" type="checkbox">
+            Показать все станции
+          </label>
+        </div>
+        <div class="chart-shell">
+          <div class="chart-host" id="chartHost">
+            <div class="empty">График появится после загрузки данных</div>
+          </div>
+          <div class="legend" id="legendHost"></div>
+          <div class="tooltip" id="tooltip"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="topPlayersTitle">
+      <div class="panel__head">
+        <div>
+          <h2 class="panel__title" id="topPlayersTitle">Топ-10 игроков</h2>
+          <div class="panel__meta">Доля считается от всего утилизированного времени месяца</div>
+        </div>
+      </div>
+      <div class="panel__body">
+        <div class="table-grid">
+          <div>
+            <h3 class="panel__title">Прошлый месяц</h3>
+            <div id="lastMonthTable"></div>
+          </div>
+          <div>
+            <h3 class="panel__title">Текущий месяц</h3>
+            <div id="currentMonthTable"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "https://services.drova.io";
+    const STORAGE_KEYS = {
+      token: "drova.personal.token",
+      remember: "drova.personal.remember",
+      timeZone: "drova.personal.timeZone"
+    };
+    const SHORT_SESSION_MS = 5 * 60 * 1000;
+    const FETCH_CONCURRENCY = 4;
+    const DEFAULT_STATION_LIMIT = 12;
+
+    const PERIODS = [
+      { key: "lastMonth", label: "Дневной: прошлый месяц" },
+      { key: "currentMonth", label: "Дневной: текущий месяц" },
+      { key: "sixMonthsWeekly", label: "Понедельный: 6 месяцев" }
+    ];
+    const METRICS = [
+      { key: "totalUtilization", label: "Утилизация суммарно" },
+      { key: "stationUtilization", label: "Утилизация постанционно" },
+      { key: "shortSessions", label: "Короткие сессии" }
+    ];
+    const COLORS = [
+      "#4fc3c7", "#70c87f", "#f2b84b", "#e06f74", "#a992ff", "#6aa8ff",
+      "#d58bff", "#57d6a6", "#ff9d66", "#91d1ff", "#d6c65e", "#ff7da1",
+      "#85e0e0", "#b2d76f", "#b18cff", "#f0a15c", "#79b8ff", "#d987c5"
+    ];
+
+    const formatNumber = new Intl.NumberFormat("ru-RU");
+    const formatPct = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+    const formatHours = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 });
+
+    const state = {
+      token: "",
+      timeZone: "",
+      rawSessions: [],
+      sessions: [],
+      stationIds: [],
+      serverNames: {},
+      period: "currentMonth",
+      metric: "totalUtilization",
+      showAllStations: false,
+      loading: false
+    };
+
+    const els = {};
+    const formatters = new Map();
+
+    document.addEventListener("DOMContentLoaded", init);
+
+    function init() {
+      bindElements();
+      initTimeZones();
+      initControls();
+      renderTabs();
+      restoreLocalState();
+      renderAll();
+    }
+
+    function bindElements() {
+      [
+        "tokenInput", "rememberToken", "timeZoneSelect", "loadButton", "clearButton",
+        "statusValue", "statusNote", "errorBox", "fetchProgressValue", "fetchProgressBar",
+        "fetchProgressText", "processProgressValue", "processProgressBar", "processProgressText",
+        "stationCount", "sessionCount", "sessionCountNote", "periodTabs", "metricTabs", "chartTitle",
+        "chartMeta", "stationOptions", "showAllStations", "chartHost", "legendHost",
+        "tooltip", "lastMonthTable", "currentMonthTable"
+      ].forEach((id) => {
+        els[id] = document.getElementById(id);
+      });
+    }
+
+    function initControls() {
+      els.loadButton.addEventListener("click", () => loadData());
+      els.clearButton.addEventListener("click", clearAll);
+      els.rememberToken.addEventListener("change", saveTokenPreference);
+      els.timeZoneSelect.addEventListener("change", () => {
+        state.timeZone = els.timeZoneSelect.value;
+        localStorage.setItem(STORAGE_KEYS.timeZone, state.timeZone);
+        if (state.rawSessions.length) {
+          processAndRender();
+        } else {
+          renderAll();
+        }
+      });
+      els.showAllStations.addEventListener("change", () => {
+        state.showAllStations = els.showAllStations.checked;
+        renderAll();
+      });
+    }
+
+    function initTimeZones() {
+      const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      let zones = [browserTz, "UTC"];
+      if (Intl.supportedValuesOf) {
+        try {
+          zones = Intl.supportedValuesOf("timeZone");
+          if (!zones.includes(browserTz)) zones.unshift(browserTz);
+        } catch {}
+      }
+      els.timeZoneSelect.replaceChildren();
+      [...new Set(zones)].forEach((zone) => {
+        const option = document.createElement("option");
+        option.value = zone;
+        option.textContent = zone;
+        els.timeZoneSelect.appendChild(option);
+      });
+      state.timeZone = browserTz;
+      els.timeZoneSelect.value = browserTz;
+    }
+
+    function restoreLocalState() {
+      const savedTz = localStorage.getItem(STORAGE_KEYS.timeZone);
+      if (savedTz && [...els.timeZoneSelect.options].some((opt) => opt.value === savedTz)) {
+        state.timeZone = savedTz;
+        els.timeZoneSelect.value = savedTz;
+      }
+      const remember = localStorage.getItem(STORAGE_KEYS.remember) === "1";
+      els.rememberToken.checked = remember;
+      if (remember) {
+        const token = localStorage.getItem(STORAGE_KEYS.token) || "";
+        els.tokenInput.value = token;
+        state.token = token;
+      }
+    }
+
+    function saveTokenPreference() {
+      localStorage.setItem(STORAGE_KEYS.remember, els.rememberToken.checked ? "1" : "0");
+      if (els.rememberToken.checked) {
+        localStorage.setItem(STORAGE_KEYS.token, els.tokenInput.value.trim());
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.token);
+      }
+    }
+
+    function renderTabs() {
+      renderTabGroup(els.periodTabs, PERIODS, state.period, (key) => {
+        state.period = key;
+        renderAll();
+      });
+      renderTabGroup(els.metricTabs, METRICS, state.metric, (key) => {
+        state.metric = key;
+        renderAll();
+      });
+    }
+
+    function renderTabGroup(root, items, activeKey, onClick) {
+      root.replaceChildren();
+      items.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = item.label;
+        button.setAttribute("aria-pressed", item.key === activeKey ? "true" : "false");
+        button.addEventListener("click", () => {
+          onClick(item.key);
+          renderTabs();
+        });
+        root.appendChild(button);
+      });
+    }
+
+    async function loadData() {
+      const token = els.tokenInput.value.trim();
+      if (!token) {
+        showError("Введите API токен для получения статистики.");
+        return;
+      }
+
+      state.token = token;
+      saveTokenPreference();
+      setLoading(true);
+      showError("");
+      setFetchProgress(0, "Старт загрузки");
+      setProcessProgress(0, "Ожидание данных");
+
+      try {
+        setStatus("Загрузка", "Получаю список станций");
+        setFetchProgress(5, "Получаю список станций");
+        const baseSessions = await fetchSessions(null);
+        const candidateStationIds = uniqueStationIds(baseSessions);
+        setFetchProgress(15, `Найдено станций: ${candidateStationIds.length}`);
+
+        const stationPayloads = await mapLimit(candidateStationIds, FETCH_CONCURRENCY, async (stationId, index) => {
+          const pct = 15 + Math.round(((index + 1) / Math.max(candidateStationIds.length, 1)) * 70);
+          setFetchProgress(pct, `Станция ${index + 1}/${candidateStationIds.length}`);
+          const sessions = await fetchSessions(stationId);
+          return { stationId, sessions };
+        });
+
+        const activePayloads = stationPayloads.filter((item) => item.sessions.length > 0);
+        const activeStationIds = activePayloads.map((item) => item.stationId).sort();
+        state.stationIds = activeStationIds;
+        setFetchProgress(88, `Загружено станций: ${activeStationIds.length}`);
+
+        state.serverNames = await fetchStationNames(activeStationIds);
+        const merged = dedupeSessions(activePayloads.flatMap((item) => item.sessions));
+        state.rawSessions = merged;
+        setFetchProgress(100, `Готово: ${merged.length} сессий`);
+        await processAndRender();
+      } catch (error) {
+        showError(error.message || String(error));
+        setStatus("Ошибка", "Загрузка не завершена");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function apiGet(path) {
+      const response = await fetch(`${API_BASE}${path}`, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "X-Auth-Token": state.token
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`API ${response.status}: ${path}`);
+      }
+      return response.json();
+    }
+
+    async function apiPostJson(path, payload) {
+      const response = await fetch(`${API_BASE}${path}`, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-Auth-Token": state.token
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        throw new Error(`API ${response.status}: ${path}`);
+      }
+      return response.json();
+    }
+
+    async function fetchSessions(stationId) {
+      const params = new URLSearchParams({ limit: "1000" });
+      if (stationId) params.set("server_id", stationId);
+      const json = await apiGet(`/session-manager/sessions?${params.toString()}`);
+      return Array.isArray(json?.sessions) ? json.sessions : [];
+    }
+
+    async function fetchStationNames(stationIds) {
+      if (!stationIds.length) return {};
+      try {
+        const names = await apiPostJson("/server-manager/servers/server_names", stationIds.filter(Boolean));
+        return names && typeof names === "object" && !Array.isArray(names) ? names : {};
+      } catch (error) {
+        console.warn("server_names unavailable", error);
+        return {};
+      }
+    }
+
+    function uniqueStationIds(sessions) {
+      const ids = new Set();
+      sessions.forEach((session) => {
+        const stationId = getStationId(session);
+        if (stationId) ids.add(stationId);
+      });
+      return [...ids].sort();
+    }
+
+    function getStationId(session) {
+      return String(
+        session?.server_id ??
+        session?.server_uuid ??
+        session?.serverId ??
+        session?.serverUUID ??
+        ""
+      ).trim();
+    }
+
+    function dedupeSessions(sessions) {
+      const seen = new Set();
+      const out = [];
+      sessions.forEach((session) => {
+        const key = session?.uuid || JSON.stringify([
+          session?.created_on,
+          session?.finished_on,
+          session?.client_id,
+          getStationId(session)
+        ]);
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(session);
+      });
+      return out;
+    }
+
+    async function processAndRender() {
+      setStatus("Обработка", "Готовлю графики");
+      setProcessProgress(10, "Подготовка сессий");
+      await nextFrame();
+
+      state.sessions = preprocessSessions(state.rawSessions);
+      setProcessProgress(35, "Расчёт длительности");
+      await nextFrame();
+
+      setProcessProgress(55, "Расчёт периодов");
+      await nextFrame();
+
+      setProcessProgress(75, "Построение графиков");
+      await nextFrame();
+
+      renderAll();
+      setProcessProgress(100, "Готово");
+      setStatus("Готово", `${state.sessions.length} сессий используются в графиках`);
+    }
+
+    function preprocessSessions(rawSessions) {
+      const allowed = new Set(["prepaid", "subscription"]);
+      return rawSessions.map((session) => {
+        const created = Number(session?.created_on);
+        const finished = Number(session?.finished_on);
+        const duration = finished - created;
+        return {
+          source: session,
+          stationId: getStationId(session),
+          clientId: String(session?.client_id || "Unknown"),
+          billingType: String(session?.billing_type || "").toLowerCase().trim(),
+          created,
+          finished,
+          duration
+        };
+      }).filter((session) => (
+        allowed.has(session.billingType) &&
+        session.stationId &&
+        Number.isFinite(session.created) &&
+        Number.isFinite(session.finished) &&
+        session.finished > 0 &&
+        session.duration > 0
+      ));
+    }
+
+    function renderAll() {
+      renderTabs();
+      renderSummary();
+      renderStationOptions();
+      renderChart();
+      renderTopPlayers();
+    }
+
+    function renderSummary() {
+      els.stationCount.textContent = state.stationIds.length ? formatNumber.format(state.stationIds.length) : "-";
+      els.sessionCount.textContent = state.sessions.length ? formatNumber.format(state.sessions.length) : "-";
+    }
+
+    function renderStationOptions() {
+      const perStationMetric = state.metric === "stationUtilization" || state.metric === "shortSessions";
+      els.stationOptions.hidden = !perStationMetric || state.stationIds.length <= DEFAULT_STATION_LIMIT;
+    }
+
+    function renderChart() {
+      if (!state.sessions.length || !state.stationIds.length) {
+        els.chartHost.innerHTML = `<div class="empty">График появится после загрузки данных</div>`;
+        els.legendHost.replaceChildren();
+        els.chartMeta.textContent = "Загрузите данные для построения графиков";
+        return;
+      }
+
+      const buckets = getBucketsForPeriod(state.period);
+      const periodLabel = PERIODS.find((item) => item.key === state.period)?.label || "";
+      const metricLabel = METRICS.find((item) => item.key === state.metric)?.label || "";
+      els.chartTitle.textContent = metricLabel;
+      els.chartMeta.textContent = `${periodLabel}, ${state.timeZone}`;
+
+      if (state.metric === "totalUtilization") {
+        drawChart(buildTotalUtilizationSeries(buckets), "%");
+      } else if (state.metric === "stationUtilization") {
+        drawChart(buildStationUtilizationSeries(buckets), "%");
+      } else {
+        drawChart(buildShortSessionsSeries(buckets), "сессий");
+      }
+    }
+
+    function buildTotalUtilizationSeries(buckets) {
+      const points = buckets.map((bucket) => {
+        const busyMs = sumOverlapMs(state.sessions, bucket);
+        const capacityMs = bucketDuration(bucket) * Math.max(state.stationIds.length, 1);
+        const value = capacityMs > 0 ? busyMs / capacityMs * 100 : 0;
+        return pointFor(bucket, value, `${formatPct.format(value)}%`, `${formatHours.format(busyMs / 3600000)} ч`);
+      });
+      return [{ name: "Все станции", color: COLORS[0], points }];
+    }
+
+    function buildStationUtilizationSeries(buckets) {
+      const shown = selectedStationIds(buckets, "utilization");
+      return shown.map((stationId, index) => {
+        const sessions = state.sessions.filter((session) => session.stationId === stationId);
+        const points = buckets.map((bucket) => {
+          const busyMs = sumOverlapMs(sessions, bucket);
+          const value = bucketDuration(bucket) > 0 ? busyMs / bucketDuration(bucket) * 100 : 0;
+          return pointFor(bucket, value, `${formatPct.format(value)}%`, `${formatHours.format(busyMs / 3600000)} ч`);
+        });
+        return {
+          name: stationLabel(stationId),
+          color: COLORS[index % COLORS.length],
+          points
+        };
+      });
+    }
+
+    function buildShortSessionsSeries(buckets) {
+      const shortSessions = state.sessions.filter((session) => session.duration < SHORT_SESSION_MS);
+      const totalPoints = buckets.map((bucket) => {
+        const count = shortSessions.filter((session) => session.created >= bucket.startMs && session.created < bucket.endMs).length;
+        return pointFor(bucket, count, `${formatNumber.format(count)} сессий`, "");
+      });
+      const series = [{ name: "Все станции", color: COLORS[3], points: totalPoints }];
+      const shown = selectedStationIds(buckets, "shortSessions");
+      shown.forEach((stationId, index) => {
+        const stationSessions = shortSessions.filter((session) => session.stationId === stationId);
+        const points = buckets.map((bucket) => {
+          const count = stationSessions.filter((session) => session.created >= bucket.startMs && session.created < bucket.endMs).length;
+          return pointFor(bucket, count, `${formatNumber.format(count)} сессий`, "");
+        });
+        series.push({
+          name: stationLabel(stationId),
+          color: COLORS[(index + 4) % COLORS.length],
+          points
+        });
+      });
+      return series;
+    }
+
+    function selectedStationIds(buckets, metric) {
+      const ranked = rankStationIds(buckets, metric);
+      return state.showAllStations ? ranked : ranked.slice(0, DEFAULT_STATION_LIMIT);
+    }
+
+    function rankStationIds(buckets, metric) {
+      const totals = new Map(state.stationIds.map((stationId) => [stationId, 0]));
+      if (metric === "shortSessions") {
+        state.sessions.forEach((session) => {
+          if (session.duration >= SHORT_SESSION_MS) return;
+          if (!buckets.some((bucket) => session.created >= bucket.startMs && session.created < bucket.endMs)) return;
+          totals.set(session.stationId, (totals.get(session.stationId) || 0) + 1);
+        });
+      } else {
+        state.sessions.forEach((session) => {
+          const totalMs = buckets.reduce((sum, bucket) => (
+            sum + overlapMs(session.created, session.finished, bucket.startMs, bucket.endMs)
+          ), 0);
+          totals.set(session.stationId, (totals.get(session.stationId) || 0) + totalMs);
+        });
+      }
+      return [...state.stationIds].sort((a, b) => {
+        const diff = (totals.get(b) || 0) - (totals.get(a) || 0);
+        if (diff !== 0) return diff;
+        return stationLabel(a).localeCompare(stationLabel(b), "ru");
+      });
+    }
+
+    function pointFor(bucket, value, valueLabel, extraLabel) {
+      return {
+        label: bucket.label,
+        value,
+        tooltip: [bucket.label, valueLabel, extraLabel].filter(Boolean).join("\n")
+      };
+    }
+
+    function drawChart(series, unitLabel) {
+      els.chartHost.replaceChildren();
+      els.legendHost.replaceChildren();
+
+      const allPoints = series.flatMap((item) => item.points);
+      if (!allPoints.length) {
+        els.chartHost.innerHTML = `<div class="empty">Недостаточно данных для графика</div>`;
+        return;
+      }
+
+      const width = 960;
+      const height = 360;
+      const margin = { top: 22, right: 22, bottom: 58, left: 58 };
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+      const maxY = Math.max(1, ...allPoints.map((point) => point.value));
+      const xCount = series[0].points.length - 1;
+
+      const svg = svgEl("svg", { viewBox: `0 0 ${width} ${height}`, role: "img" });
+      const chart = svgEl("g", { transform: `translate(${margin.left},${margin.top})` });
+      svg.appendChild(chart);
+
+      for (let i = 0; i <= 4; i += 1) {
+        const y = innerHeight - (innerHeight * i / 4);
+        chart.appendChild(svgEl("line", { x1: 0, y1: y, x2: innerWidth, y2: y, class: "grid-line" }));
+        const label = svgEl("text", { x: -10, y: y + 4, class: "axis-text", "text-anchor": "end" });
+        label.textContent = `${formatPct.format(maxY * i / 4)}${unitLabel === "%" ? "%" : ""}`;
+        chart.appendChild(label);
+      }
+      chart.appendChild(svgEl("line", { x1: 0, y1: innerHeight, x2: innerWidth, y2: innerHeight, class: "axis-line" }));
+      chart.appendChild(svgEl("line", { x1: 0, y1: 0, x2: 0, y2: innerHeight, class: "axis-line" }));
+
+      const labelEvery = Math.max(1, Math.ceil(series[0].points.length / 10));
+      series[0].points.forEach((point, index) => {
+        if (index % labelEvery !== 0 && index !== series[0].points.length - 1) return;
+        const x = xPos(index, xCount, innerWidth);
+        const label = svgEl("text", {
+          x,
+          y: innerHeight + 22,
+          class: "axis-text",
+          "text-anchor": "middle"
+        });
+        label.textContent = point.label;
+        chart.appendChild(label);
+      });
+
+      series.forEach((item) => {
+        const path = item.points.map((point, index) => {
+          const x = xPos(index, xCount, innerWidth);
+          const y = yPos(point.value, maxY, innerHeight);
+          return `${index === 0 ? "M" : "L"} ${x} ${y}`;
+        }).join(" ");
+        chart.appendChild(svgEl("path", {
+          d: path,
+          class: "series-line",
+          stroke: item.color
+        }));
+
+        item.points.forEach((point, index) => {
+          const x = xPos(index, xCount, innerWidth);
+          const y = yPos(point.value, maxY, innerHeight);
+          const circle = svgEl("circle", {
+            cx: x,
+            cy: y,
+            r: series.length > 8 ? 2.4 : 3.7,
+            fill: item.color,
+            class: "series-point"
+          });
+          circle.addEventListener("mouseenter", (event) => showTooltip(event, item.name, point.tooltip));
+          circle.addEventListener("mousemove", (event) => moveTooltip(event));
+          circle.addEventListener("mouseleave", hideTooltip);
+          chart.appendChild(circle);
+        });
+
+        const legend = document.createElement("span");
+        legend.className = "legend-item";
+        const dot = document.createElement("span");
+        dot.className = "legend-dot";
+        dot.style.background = item.color;
+        const label = document.createElement("span");
+        label.textContent = item.name;
+        legend.append(dot, label);
+        els.legendHost.appendChild(legend);
+      });
+
+      els.chartHost.appendChild(svg);
+    }
+
+    function xPos(index, xCount, width) {
+      return xCount === 0 ? width / 2 : index / xCount * width;
+    }
+
+    function yPos(value, maxY, height) {
+      return height - (value / maxY * height);
+    }
+
+    function svgEl(name, attrs) {
+      const el = document.createElementNS("http://www.w3.org/2000/svg", name);
+      Object.entries(attrs || {}).forEach(([key, value]) => el.setAttribute(key, value));
+      return el;
+    }
+
+    function showTooltip(event, title, body) {
+      els.tooltip.textContent = "";
+      const strong = document.createElement("strong");
+      strong.textContent = title;
+      els.tooltip.appendChild(strong);
+      body.split("\n").forEach((line) => {
+        const div = document.createElement("div");
+        div.textContent = line;
+        els.tooltip.appendChild(div);
+      });
+      els.tooltip.classList.add("is-visible");
+      moveTooltip(event);
+    }
+
+    function moveTooltip(event) {
+      els.tooltip.style.left = `${Math.min(event.clientX + 14, window.innerWidth - 330)}px`;
+      els.tooltip.style.top = `${event.clientY + 14}px`;
+    }
+
+    function hideTooltip() {
+      els.tooltip.classList.remove("is-visible");
+    }
+
+    function renderTopPlayers() {
+      if (!state.sessions.length) {
+        els.lastMonthTable.innerHTML = `<div class="empty">Нет данных</div>`;
+        els.currentMonthTable.innerHTML = `<div class="empty">Нет данных</div>`;
+        return;
+      }
+      renderTopTable(els.lastMonthTable, topPlayersForPeriod(getMonthBounds(-1)));
+      renderTopTable(els.currentMonthTable, topPlayersForPeriod(getMonthBounds(0)));
+    }
+
+    function topPlayersForPeriod(period) {
+      const totals = new Map();
+      let allMs = 0;
+      state.sessions.forEach((session) => {
+        const ms = overlapMs(session.created, session.finished, period.startMs, period.endMs);
+        if (ms <= 0) return;
+        totals.set(session.clientId, (totals.get(session.clientId) || 0) + ms);
+        allMs += ms;
+      });
+      let cumulative = 0;
+      return [...totals.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([clientId, ms], index) => {
+          cumulative += ms;
+          return {
+            rank: index + 1,
+            clientId,
+            hours: ms / 3600000,
+            share: allMs > 0 ? ms / allMs * 100 : 0,
+            cumulative: allMs > 0 ? cumulative / allMs * 100 : 0
+          };
+        });
+    }
+
+    function renderTopTable(root, rows) {
+      if (!rows.length) {
+        root.innerHTML = `<div class="empty">Нет данных за период</div>`;
+        return;
+      }
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th style="width:44px">#</th>
+            <th>Игрок</th>
+            <th class="num">Часы</th>
+            <th class="num">Доля</th>
+            <th class="num">Кум.</th>
+          </tr>
+        </thead>
+      `;
+      const tbody = document.createElement("tbody");
+      rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        [
+          row.rank,
+          row.clientId,
+          formatHours.format(row.hours),
+          `${formatPct.format(row.share)}%`,
+          `${formatPct.format(row.cumulative)}%`
+        ].forEach((value, index) => {
+          const td = document.createElement("td");
+          td.textContent = String(value);
+          if (index === 0 || index >= 2) td.className = "num";
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      root.replaceChildren(table);
+    }
+
+    function getBucketsForPeriod(key) {
+      if (key === "lastMonth") return dailyBucketsForMonth(-1);
+      if (key === "sixMonthsWeekly") return weeklyBucketsForSixMonths();
+      return dailyBucketsForMonth(0);
+    }
+
+    function dailyBucketsForMonth(offset) {
+      const now = Date.now();
+      const current = zonedDate(now);
+      const targetMonth = addMonths({ year: current.year, month: current.month, day: 1 }, offset);
+      const nextMonth = addMonths(targetMonth, 1);
+      const buckets = [];
+      for (let day = targetMonth; compareDates(day, nextMonth) < 0; day = addDays(day, 1)) {
+        const nextDay = addDays(day, 1);
+        const startMs = startOfDayMs(day);
+        let endMs = startOfDayMs(nextDay);
+        if (offset === 0 && compareDates(day, current) === 0) endMs = now;
+        if (offset === 0 && startMs > now) continue;
+        buckets.push({ startMs, endMs, label: formatBucketDay(startMs) });
+        if (offset === 0 && compareDates(day, current) >= 0) break;
+      }
+      return buckets;
+    }
+
+    function weeklyBucketsForSixMonths() {
+      const now = Date.now();
+      const current = zonedDate(now);
+      const sixMonthsAgo = addMonths(current, -6);
+      let week = mondayOf(sixMonthsAgo);
+      const currentWeek = mondayOf(current);
+      const buckets = [];
+      while (compareDates(week, addDays(currentWeek, 7)) < 0) {
+        const nextWeek = addDays(week, 7);
+        const startMs = startOfDayMs(week);
+        const endMs = compareDates(week, currentWeek) === 0 ? now : startOfDayMs(nextWeek);
+        buckets.push({ startMs, endMs, label: `${formatBucketDay(startMs)} - ${formatBucketDay(endMs - 1)}` });
+        week = nextWeek;
+      }
+      return buckets;
+    }
+
+    function getMonthBounds(offset) {
+      const now = Date.now();
+      const current = zonedDate(now);
+      const target = addMonths({ year: current.year, month: current.month, day: 1 }, offset);
+      const next = addMonths(target, 1);
+      return {
+        startMs: startOfDayMs(target),
+        endMs: offset === 0 ? now : startOfDayMs(next)
+      };
+    }
+
+    function sumOverlapMs(sessions, bucket) {
+      return sessions.reduce((sum, session) => (
+        sum + overlapMs(session.created, session.finished, bucket.startMs, bucket.endMs)
+      ), 0);
+    }
+
+    function overlapMs(startA, endA, startB, endB) {
+      return Math.max(0, Math.min(endA, endB) - Math.max(startA, startB));
+    }
+
+    function bucketDuration(bucket) {
+      return Math.max(0, bucket.endMs - bucket.startMs);
+    }
+
+    function stationLabel(stationId) {
+      return state.serverNames[stationId] || stationId;
+    }
+
+    function getFormatter(timeZone, options) {
+      const key = `${timeZone}|${JSON.stringify(options)}`;
+      if (!formatters.has(key)) {
+        formatters.set(key, new Intl.DateTimeFormat("ru-RU", { timeZone, ...options }));
+      }
+      return formatters.get(key);
+    }
+
+    function zonedParts(ms) {
+      const formatter = getFormatter(state.timeZone, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23"
+      });
+      const parts = {};
+      formatter.formatToParts(new Date(ms)).forEach((part) => {
+        if (part.type !== "literal") parts[part.type] = Number(part.value);
+      });
+      return {
+        year: parts.year,
+        month: parts.month,
+        day: parts.day,
+        hour: parts.hour || 0,
+        minute: parts.minute || 0,
+        second: parts.second || 0
+      };
+    }
+
+    function zonedDate(ms) {
+      const parts = zonedParts(ms);
+      return { year: parts.year, month: parts.month, day: parts.day };
+    }
+
+    function zonedTimeToUtcMs(parts) {
+      const target = Date.UTC(
+        parts.year,
+        parts.month - 1,
+        parts.day,
+        parts.hour || 0,
+        parts.minute || 0,
+        parts.second || 0,
+        parts.millisecond || 0
+      );
+      let guess = target;
+      for (let i = 0; i < 4; i += 1) {
+        const actualParts = zonedParts(guess);
+        const actual = Date.UTC(
+          actualParts.year,
+          actualParts.month - 1,
+          actualParts.day,
+          actualParts.hour,
+          actualParts.minute,
+          actualParts.second,
+          parts.millisecond || 0
+        );
+        const diff = actual - target;
+        guess -= diff;
+        if (diff === 0) break;
+      }
+      return guess;
+    }
+
+    function startOfDayMs(date) {
+      return zonedTimeToUtcMs({ ...date, hour: 0, minute: 0, second: 0, millisecond: 0 });
+    }
+
+    function addDays(date, days) {
+      const d = new Date(Date.UTC(date.year, date.month - 1, date.day + days));
+      return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
+    }
+
+    function addMonths(date, months) {
+      const d = new Date(Date.UTC(date.year, date.month - 1 + months, 1));
+      return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: 1 };
+    }
+
+    function mondayOf(date) {
+      const d = new Date(Date.UTC(date.year, date.month - 1, date.day));
+      const day = d.getUTCDay();
+      const offset = (day + 6) % 7;
+      return addDays(date, -offset);
+    }
+
+    function compareDates(a, b) {
+      if (a.year !== b.year) return a.year - b.year;
+      if (a.month !== b.month) return a.month - b.month;
+      return a.day - b.day;
+    }
+
+    function formatShortDate(ms) {
+      return getFormatter(state.timeZone, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit"
+      }).format(new Date(ms));
+    }
+
+    function formatBucketDay(ms) {
+      return getFormatter(state.timeZone, {
+        day: "2-digit",
+        month: "2-digit"
+      }).format(new Date(ms));
+    }
+
+    async function mapLimit(items, limit, fn) {
+      const result = new Array(items.length);
+      let index = 0;
+      const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+        while (index < items.length) {
+          const current = index;
+          index += 1;
+          result[current] = await fn(items[current], current);
+        }
+      });
+      await Promise.all(workers);
+      return result;
+    }
+
+    function setFetchProgress(percent, text) {
+      setProgress(els.fetchProgressValue, els.fetchProgressBar, els.fetchProgressText, percent, text);
+    }
+
+    function setProcessProgress(percent, text) {
+      setProgress(els.processProgressValue, els.processProgressBar, els.processProgressText, percent, text);
+    }
+
+    function setProgress(valueEl, barEl, textEl, percent, text) {
+      const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+      valueEl.textContent = `${clamped}%`;
+      barEl.style.width = `${clamped}%`;
+      textEl.textContent = text;
+    }
+
+    function setStatus(value, note) {
+      els.statusValue.textContent = value;
+      els.statusNote.textContent = note;
+    }
+
+    function setLoading(isLoading) {
+      state.loading = isLoading;
+      els.loadButton.disabled = isLoading;
+      els.clearButton.disabled = isLoading;
+    }
+
+    function showError(message) {
+      els.errorBox.textContent = message;
+      els.errorBox.classList.toggle("is-visible", Boolean(message));
+    }
+
+    function clearAll() {
+      state.rawSessions = [];
+      state.sessions = [];
+      state.stationIds = [];
+      state.serverNames = {};
+      els.tokenInput.value = "";
+      els.rememberToken.checked = false;
+      localStorage.removeItem(STORAGE_KEYS.token);
+      localStorage.setItem(STORAGE_KEYS.remember, "0");
+      showError("");
+      setStatus("Ожидание", "Данные ещё не загружены");
+      setFetchProgress(0, "Ожидание запуска");
+      setProcessProgress(0, "Ожидание данных");
+      renderAll();
+    }
+
+    function nextFrame() {
+      return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    }
+  </script>
+</body>
+</html>
