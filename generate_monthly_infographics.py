@@ -294,6 +294,63 @@ def clip_intervals_to_period(intervals: pd.DataFrame, period: ReportPeriod) -> p
     return clipped[clipped["duration_sec"] > 0].reset_index(drop=True)
 
 
+def days_without_sessions(period: ReportPeriod, month_df: pd.DataFrame) -> list[pd.Timestamp]:
+    expected_days = list(
+        pd.date_range(period.start.normalize(), period.display_end.normalize(), freq="D")
+    )
+    if not expected_days:
+        return []
+
+    covered_days: set[pd.Timestamp] = set()
+    required_columns = {"clipped_started_at", "clipped_ended_at"}
+    if not month_df.empty and required_columns.issubset(month_df.columns):
+        first_day = expected_days[0]
+        last_day = expected_days[-1]
+        for row in month_df[["clipped_started_at", "clipped_ended_at"]].dropna().itertuples(
+            index=False
+        ):
+            started_at = pd.Timestamp(row.clipped_started_at)
+            ended_at = pd.Timestamp(row.clipped_ended_at)
+            if ended_at <= started_at:
+                continue
+
+            start_day = max(started_at.normalize(), first_day)
+            end_day = min((ended_at - pd.Timedelta(nanoseconds=1)).normalize(), last_day)
+            if end_day < start_day:
+                continue
+            covered_days.update(pd.date_range(start_day, end_day, freq="D"))
+
+    return [day for day in expected_days if day not in covered_days]
+
+
+def format_compact_date_ranges(dates: list[pd.Timestamp]) -> str:
+    if not dates:
+        return ""
+
+    normalized_dates = sorted(pd.Timestamp(date).normalize() for date in dates)
+    ranges: list[str] = []
+    range_start = normalized_dates[0]
+    previous = normalized_dates[0]
+
+    for current in normalized_dates[1:]:
+        if current == previous + pd.Timedelta(days=1):
+            previous = current
+            continue
+
+        ranges.append(format_date_range(range_start, previous))
+        range_start = current
+        previous = current
+
+    ranges.append(format_date_range(range_start, previous))
+    return ", ".join(ranges)
+
+
+def format_date_range(start: pd.Timestamp, end: pd.Timestamp) -> str:
+    if start == end:
+        return format_date(start)
+    return f"{format_date(start)}-{format_date(end)}"
+
+
 def cache_read(path: Path, ttl_hours: float) -> tuple[Any | None, bool]:
     if not path.exists():
         return None, False
@@ -497,9 +554,15 @@ def build_month_payload(
     )
 
     cpu, gpu = top_hardware(active_uuids, server_processors, server_graphics)
+    missing_days = days_without_sessions(period, month_df)
     warnings: list[str] = []
     if period.is_partial:
         warnings.append(f"Месяц частичный: данные за период {period.period_label}.")
+    if missing_days:
+        warnings.append(
+            "Месяц частичный: в данных нет сессий за "
+            f"{format_compact_date_ranges(missing_days)}"
+        )
     unknown_product_hours = unknown_product_hours_all + unknown_product_hours_desktop
     if unknown_product_hours > 0.5:
         warnings.append(
@@ -517,7 +580,7 @@ def build_month_payload(
         "id": period.id,
         "label": period.label,
         "period": period.period_label,
-        "isPartial": period.is_partial,
+        "isPartial": period.is_partial or bool(missing_days),
         "warnings": warnings,
         "kpis": {
             "busyHours": int(round(float(month_df["duration_sec"].sum()) / 3600.0)),
@@ -689,6 +752,57 @@ def run_self_test() -> None:
     )
     clipped = clip_intervals_to_period(sample, april)
     assert int(clipped["duration_sec"].sum()) == 3600
+
+    may = ReportPeriod(
+        id="2026-05",
+        label="Май 2026",
+        start=pd.Timestamp("2026-05-01"),
+        end_exclusive=pd.Timestamp("2026-06-01"),
+        display_end=pd.Timestamp("2026-05-31"),
+        is_partial=False,
+    )
+    gap_intervals = pd.DataFrame(
+        [
+            {
+                "uuid": "u_gap",
+                "product_id": "desktop",
+                "started_at": pd.Timestamp("2026-05-01 01:00:00"),
+                "ended_at": pd.Timestamp("2026-05-09 00:00:00"),
+                "interval_id": 1,
+            },
+            {
+                "uuid": "u_gap",
+                "product_id": "desktop",
+                "started_at": pd.Timestamp("2026-05-13 00:00:00"),
+                "ended_at": pd.Timestamp("2026-05-29 00:00:00"),
+                "interval_id": 2,
+            },
+            {
+                "uuid": "u_gap",
+                "product_id": "desktop",
+                "started_at": pd.Timestamp("2026-05-30 12:00:00"),
+                "ended_at": pd.Timestamp("2026-05-31 12:00:00"),
+                "interval_id": 3,
+            },
+        ]
+    )
+    gap_month = clip_intervals_to_period(gap_intervals, may)
+    missing_days = days_without_sessions(may, gap_month)
+    missing_label = "09.05.2026-12.05.2026, 29.05.2026"
+    assert format_compact_date_ranges(missing_days) == missing_label
+
+    gap_payload = build_month_payload(
+        period=may,
+        month_df=gap_month,
+        product_is_desktop={"desktop": True},
+        station_names={},
+        server_processors={},
+        server_graphics={},
+    )
+    assert gap_payload["isPartial"] is True
+    assert gap_payload["warnings"] == [
+        f"Месяц частичный: в данных нет сессий за {missing_label}"
+    ]
 
     sparse_product_changes = pd.DataFrame(
         [
